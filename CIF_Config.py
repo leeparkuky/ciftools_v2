@@ -3,7 +3,25 @@ from typing import Union, List
 from utils import *
 
 
-
+@dataclass
+class SocrataConfig:
+    domain: str
+    app_token: str
+    user_name: str
+    password : str
+    
+    @property
+    def client(self):
+        from sodapy import Socrata
+        if hasattr(self, '_client'):
+            pass
+        else:
+            client = Socrata(self.domain,
+                  self.app_token,
+                  username=self.user_name,
+                  password=self.password)
+            self._client = client
+        return self._client
 
 
 @dataclass

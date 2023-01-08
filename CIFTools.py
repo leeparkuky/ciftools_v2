@@ -17,7 +17,7 @@ from csv import DictReader
 # for ascync requests
 from aiohttp import ClientSession
 # cfg
-from CIF_Config import ACSConfig
+from CIF_Config import ACSConfig, SocrataConfig
 # pandas / numpy
 import pandas as pd
 import numpy as np
@@ -886,7 +886,7 @@ def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterolog
     return pd.concat(res, axis = 0)
 
 ###################################################################
-## lung_cancer_screening
+## lung_cancer_screening ########################################## -> multiprocessing with multiple states
 ###################################################################
 
         
@@ -973,3 +973,388 @@ def lung_cancer_screening(location: Union[str, List[str]]):
     return df
 
 
+############################################################################
+## BLS      ################################################################
+############################################################################
+
+@dataclass
+class BLS:
+    state_fips: Union[str, List[str]]
+    most_recent: bool = True
+    
+    @property
+    def bls_data(self):
+        if hasattr(self, '_bls_data'):
+            pass
+        else:
+            state = self.state_fips
+            response = requests.get('https://www.bls.gov/web/metro/laucntycur14.txt')
+            df = pd.DataFrame([x.strip().split('|') for x in response.text.split('\n')[6:-7]],
+                              columns = ['LAUS Area Code','State','County','Area',
+                                         'Period','Civilian Labor Force','Employed',
+                                         'Unemployed','Unemployment Rate'] )
+            df['State'] = df.State.str.strip().astype(str)
+            if isinstance(state, str):
+                assert len(state) == 2
+                df = df.loc[df.State.eq(state), :]
+            else:
+                for s in state:
+                    assert len(s) == 2
+                df = df.loc[df.State.isin(state), :]
+            df['County'] = df.County.str.strip().astype(str)
+            df['County'] = ['0'+x if len(x) < 3 else x for x in df.County]
+            df['County'] = ['0'+x if len(x) < 3 else x for x in df.County]
+            df['Employed'] = pd.to_numeric(df.Employed.str.strip().str.replace(',',''), errors = 'coerce')
+            df['Unemployed'] = pd.to_numeric(df.Unemployed.str.strip().str.replace(',',''), errors = 'coerce')
+            df['Unemployment Rate'] = pd.to_numeric(df['Unemployment Rate'].str.strip().str.replace(',',''), errors = 'coerce')
+            df['FIPS'] = df['State']+df['County']
+            df['Period'] = df.Period.str.strip()
+            if most_recent:
+                df = df.loc[df.Period.str.match(re.compile('.*p\)$'))]
+                df['Period'] = [x[:-3] for x in df.Period]
+            self._bls_data = df.loc[df.State.eq(state),['FIPS','Unemployment Rate', 'Period']].sort_values('FIPS').reset_index(drop = True)
+        return self._bls_data
+        
+
+        
+############################################################################
+## Water Violation      ####################################################  -> multiprocessing if with multiple states
+############################################################################
+        
+@dataclass
+class water_violation:
+    location: Union[str, List[str]]
+    start_year: int = 2016
+        
+    @property
+    def water_violation_data(self):
+        if hasattr(self, '_water_violation_data'):
+            pass
+        else:
+            if isinstance(self.location, str):
+                df = self.gen_water_violation(self.location)
+                data_dict = {self.location: df}
+            else:
+                datasets = Parallel(n_jobs=-1)(delayed(self.gen_water_violation)(loc) for loc in self.location)
+                data_dict = dict(zip(self.location, datasets))
+            self._water_violation_data = data_dict
+        return self._water_violation_data
+        
+        
+    def gen_water_violation(self, state:str):
+        assert len(state) == 2
+        violation = self.gen_violation(state, self.start_year)
+        profile   = self.gen_profile(state)
+        violation_by_pws = violation[['PWSID','VIOLATION_ID','indicator']].groupby(['PWSID','VIOLATION_ID'], as_index = False).max().loc[:,['PWSID','indicator']].groupby('PWSID', as_index = False).sum()
+        violation_by_pws.columns = ['PWSID','counts']
+        df = profile.merge(violation_by_pws, on = 'PWSID', how='left')
+        df = df[['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE', 'counts']].groupby('COUNTY_SERVED', as_index = False).max()
+        self.testing = df
+        df['County'] = df.COUNTY_SERVED.astype(str) + ' County'
+        df['StateAbbrev'] = df.PRIMACY_AGENCY_CODE.astype(str)
+        df.drop(['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE'], axis = 1, inplace  = True)
+        df.loc[df.counts.isnull(),'counts'] = 0
+        del profile, violation
+        return df
+        
+    @staticmethod
+    def gen_violation(state:str, start_year: int):
+        url_violation = f'https://data.epa.gov/efservice/VIOLATION/IS_HEALTH_BASED_IND/Y/PRIMACY_AGENCY_CODE/{state}/CSV'
+        violation = pd.read_csv(url_violation)
+        violation.columns = violation.columns.str.replace(re.compile('.*\.'),"")
+        violation = violation.loc[violation.COMPL_PER_BEGIN_DATE.notnull() ,:]
+        violation['date'] = pd.to_datetime(violation.COMPL_PER_BEGIN_DATE)
+        violation = violation.loc[violation.date.dt.year >= start_year, :].reset_index(drop = True)
+        violation['indicator'] = 1
+        return violation
+
+    @staticmethod
+    def gen_profile(state:str):
+        url_systems = f'https://data.epa.gov/efservice/GEOGRAPHIC_AREA/PWSID/BEGINNING/{state}/CSV'
+        profile = pd.read_csv(url_systems)
+        if len(profile.index) == 10001:
+            url_systems2 = f'https://data.epa.gov/efservice/GEOGRAPHIC_AREA/PWSID/BEGINNING/{state}/rows/10001:20000/CSV'
+            profile2 = pd.read_csv(url_systems2)
+            profile = pd.concat([profile,profile2]).reset_index(drop=True)
+            del profile2
+        profile.columns = profile.columns.str.replace(re.compile('.*\.'),"")
+        profile = profile.loc[profile['PWS_TYPE_CODE'] == 'CWS']
+        profile = profile.assign(COUNTY_SERVED = profile.COUNTY_SERVED.str.split(',')).explode('COUNTY_SERVED')
+        return profile
+
+        if isinstance(self.location, str):
+            assert len(self.location) == 2
+            self.profile = gen_profile(location)
+            self.violation = gen_violation(location)
+        else:
+            self.profile = {}
+            self.violation = {}
+            for loc in self.location:
+                assert len(loc) == 2
+                self.profile[loc] = gen_profile(loc)
+                self.violation[loc] = gen_violation(loc)
+
+                
+                
+############################################################################
+## Food Desert      ########################################################
+############################################################################
+
+class food_desert:
+    def __init__(self, state_fips: Union[ str,  List[str]]):
+        response = requests.get('https://www.ers.usda.gov/data-products/food-access-research-atlas/download-the-data/')
+        soup = BeautifulSoup(response.content, "html.parser")
+        hrefs = soup.find_all('a', href = True)
+        url_path_series = pd.Series([x['href'] for x in hrefs])
+        url = url_path_series[url_path_series.str.match(re.compile('.*FoodAccessResearchAtlasData.*', flags = re.I))].values[0]
+        self.path = f'https://www.ers.usda.gov{url}'
+        self.state_fips = state_fips
+        
+    @property
+    def food_desert_data(self):
+        if hasattr(self, '_food_desert_data'):
+            pass
+        else:
+            self._food_desert_data = self.download_data(self.state_fips)
+        return self._food_desert_data
+    
+    def download_data(self, state):
+        from tqdm import tqdm
+        import os
+        resp = requests.get(self.path, stream=True)
+        total = int(resp.headers.get('content-length', 0))
+        fname = os.path.join(getcwd(), 'food_desert.xlsx')
+        chunk_size = int(1024*1024/2)
+        with open(fname, 'wb') as file, tqdm(
+            desc="downloading food desert data file",
+            total=total,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+            leave = True
+        ) as bar:
+            for data in resp.iter_content(chunk_size=chunk_size):
+                size = file.write(data)
+                bar.update(size)
+
+        df = pd.read_excel(fname, engine = 'openpyxl', sheet_name = 2)
+        df['State'] = df.CensusTract.apply(lambda x: str(x)[:2])
+        if isinstance(state, str):
+            assert len(state) == 2
+            df = df.loc[df.State.eq(state)].reset_index(drop = True)
+        else:
+            for s in state:
+                assert len(s) == 2
+            df = df.loc[df.State.isin(state)].reset_index(drop = True)
+        df = df[['CensusTract', 'LILATracts_Vehicle', 'OHU2010']]
+        df2 = df.copy()
+        data_dictionary = {}
+        # Tract
+        df.rename(columns = {'CensusTract':'FIPS'}, inplace = True)
+        df['FIPS'] = df.FIPS.astype(str)
+        data_dictionary['Tract'] = df
+        # County
+        df2['FIPS'] = [str(x)[:5] for x in df2.CensusTract]
+        df2 = df2[['FIPS','LILATracts_Vehicle','OHU2010']].groupby('FIPS', as_index = False).apply(lambda x: pd.Series(np.average(x['LILATracts_Vehicle'], weights=x['OHU2010'])))
+        df2.columns = ['FIPS','LILATracts_Vehicle']
+        df2['FIPS'] = df2.FIPS.astype(str)
+        data_dictionary['County'] = df2
+        remove(fname)
+        
+        return data_dictionary
+    
+    
+    
+############################################################################
+## scp_cancer_data      ####################################################   -> multiprocessing
+############################################################################
+
+# reference (incidence) : https://www.statecancerprofiles.cancer.gov/incidencerates/index.php
+# reference (mortality) : https://www.statecancerprofiles.cancer.gov/deathrates/index.php
+    
+@dataclass
+class scp_cancer_data:
+    state_fips : Union[str, List[str]] #
+        
+    @property
+    def cancer_data(self):
+        if hasattr(self, '_cancer_data'):
+            pass
+        else:
+            data_dict = {}
+            data_dict['incidence'] = self.scp_cancer_inc()
+            data_dict['mortality'] = self.scp_cancer_mor()
+            self._cancer_data = data_dict
+        return self._cancer_data
+        
+        
+    def scp_cancer_inc(self):
+        sites = {'001': 'All Site', '071': 'Bladder', '076': 'Brain & ONS', '020': 'Colon & Rectum', '017': 'Esophagus', 
+                 '072': 'Kidney & Renal Pelvis', '090': 'Leukemia', '035': 'Liver & IBD', '047': 'Lung & Bronchus',
+                 '053': 'Melanoma of the Skin', '086': 'Non-Hodgkin Lymphoma', '003': 'Oral Cavity & Pharynx', '040': 'Pancreas',
+                 '018': 'Stomach', '080': 'Thyroid'}
+
+        sitesf = {'055': 'Female Breast', '057': 'Cervix', '061': 'Ovary', '058': 'Corpus Uteri & Uterus, NOS'}
+        
+        sitesm = {'066': 'Prostate'}
+        
+        gen_single_cancer_inc_all = partial(self.gen_single_cancer_inc, sex = '0')
+        gen_single_cancer_inc_male = partial(self.gen_single_cancer_inc, sex = '1')
+        gen_single_cancer_inc_female = partial(self.gen_single_cancer_inc, sex = '2')
+        if isinstance(self.state_fips, str):
+            incidence_all = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_inc_all)(
+                    state, site[0], site[1]) for state, site in product([self.state_fips],sites.items()))
+            incidence_female = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_inc_female)(
+                    state, site[0], site[1]) for state, site in product([self.state_fips],sitesf.items()))
+            incidence_male = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_inc_male)(
+                    state, site[0], site[1]) for state, site in product([self.state_fips],sitesm.items()))
+        else:
+            incidence_all = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_inc_all)(
+                    state, site[0], site[1]) for state, site in product(self.state_fips,sites.items()))
+            incidence_female = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_inc_female)(
+                    state, site[0], site[1]) for state, site in product(self.state_fips,sitesf.items()))
+            incidence_male = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_inc_male)(
+                    state, site[0], site[1]) for state, site in product(self.state_fips,sitesm.items()))
+        df = pd.concat(incidence_all + incidence_female + incidence_male, axis = 0).reset_index(drop = True)
+        return df
+
+        
+        
+    @staticmethod
+    def gen_single_cancer_inc(state:str, cancer_site_id:str, cancer_site:str, sex:int):
+        assert len(state) == 2
+        assert state.isnumeric()
+        assert sex in list('012')
+        assert len(cancer_site_id) == 3
+        path = f'https://www.statecancerprofiles.cancer.gov/incidencerates/index.php?stateFIPS={state}&areatype=county&cancer={cancer_site_id}&race=00&sex={sex}&age=001&stage=999&year=0&type=incd&sortVariableName=rate&sortOrder=desc&output=1'
+        df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,2,8],  names=['County', 'FIPS', 'AAR', 'AAC'],
+                         dtype={'County':str, 'FIPS':str}).dropna()
+        df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
+        df['Site'] = cancer_site
+        df['Type'] = 'Incidence'
+        df = df[['FIPS', 'County', 'Site', 'Type', 'AAR', 'AAC']]
+        return df
+        
+
+    def scp_cancer_mor(self):
+        sites = {'001': 'All Site', '071': 'Bladder', '076': 'Brain & ONS', '020': 'Colon & Rectum', '017': 'Esophagus', 
+                 '072': 'Kidney & Renal Pelvis', '090': 'Leukemia', '035': 'Liver & IBD', '047': 'Lung & Bronchus',
+                 '053': 'Melanoma of the Skin', '086': 'Non-Hodgkin Lymphoma', '003': 'Oral Cavity & Pharynx', '040': 'Pancreas',
+                 '018': 'Stomach', '080': 'Thyroid'}
+
+        sitesf = {'055': 'Female Breast', '057': 'Cervix', '061': 'Ovary', '058': 'Corpus Uteri & Uterus, NOS'}
+        
+        sitesm = {'066': 'Prostate'}
+        
+        gen_single_cancer_mor_all = partial(self.gen_single_cancer_mor, sex = '0')
+        gen_single_cancer_mor_male = partial(self.gen_single_cancer_mor, sex = '1')
+        gen_single_cancer_mor_female = partial(self.gen_single_cancer_mor, sex = '2')
+        if isinstance(self.state_fips, str):
+            mortality_all = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_mor_all)(
+                    state, site[0], site[1]) for state, site in product([self.state_fips],sites.items()))
+            mortality_female = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_mor_female)(
+                    state, site[0], site[1]) for state, site in product([self.state_fips],sitesf.items()))
+            mortality_male = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_mor_male)(
+                    state, site[0], site[1]) for state, site in product([self.state_fips],sitesm.items()))
+        else:
+            mortality_all = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_mor_all)(
+                    state, site[0], site[1]) for state, site in product(self.state_fips,sites.items()))
+            mortality_female = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_mor_female)(
+                    state, site[0], site[1]) for state, site in product(self.state_fips,sitesf.items()))
+            mortality_male = Parallel(n_jobs=-1)(
+                delayed(gen_single_cancer_mor_male)(
+                    state, site[0], site[1]) for state, site in product(self.state_fips,sitesm.items()))
+        df = pd.concat(mortality_all + mortality_female + mortality_male, axis = 0).reset_index(drop = True)
+        return df
+
+        
+    @staticmethod
+    def gen_single_cancer_mor(state:str, cancer_site_id:str, cancer_site:str, sex:int):
+        assert len(state) == 2
+        assert state.isnumeric()
+        assert sex in list('012')
+        assert len(cancer_site_id) == 3
+        path = f'https://www.statecancerprofiles.cancer.gov/deathrates/index.php?stateFIPS={state}&areatype=county&cancer={cancer_site_id}&race=00&sex={sex}&age=001&year=0&type=death&sortVariableName=rate&sortOrder=desc&output=1'
+        df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,2,8],  names=['County', 'FIPS', 'AAR', 'AAC'],
+                         dtype={'County':str, 'FIPS':str}).dropna()
+        df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
+        df['Site'] = cancer_site
+        df['Type'] = 'Incidence'
+        df = df[['FIPS', 'County', 'Site', 'Type', 'AAR', 'AAC']]
+        return df
+
+##################################################################
+## CDC PlACES (county/tract level risk factors and screening data)
+##################################################################
+
+
+@dataclass
+class places_data:
+    state: Union[str, List[str]] # example: KY
+    config: SocrataConfig
+    
+    
+    
+    @property
+    def places_data(self):
+        if hasattr(self, '_places_data'):
+            pass
+        else:
+            self._places_data = {'county': self.places_county(), 'tract':self.places_tract()}
+        return self._places_data
+        
+        
+    def places_county(self):
+        if isinstance(self.state, str):
+            results = self.config.client.get("i46a-9kgh", where=f'stateabbr="{self.state}"')
+        else:
+            state = '("' + '","'.join(self.state) + '")'
+            print(state)
+            results = self.config.client.get("i46a-9kgh", where=f'stateabbr in {state}')
+        results_df = pd.DataFrame.from_records(results)
+        results_df2 = results_df.loc[:, results_df.columns.isin(['countyfips', 'countyname', 'stateabbr', 'cancer_crudeprev', 
+                                  'cervical_crudeprev', 'colon_screen_crudeprev',
+                                  'csmoking_crudeprev', 'mammouse_crudeprev', 'obesity_crudeprev'])]
+
+        results_df3 = results_df2.rename(columns={'countyfips': 'FIPS', 'countyname': 'County', 'stateabbr': 'State', 
+                                                  'cancer_crudeprev': 'Cancer_Prevalence','cervical_crudeprev': 'Met_Cervical_Screen',
+                                                  'colon_screen_crudeprev': 'Met_Colon_Screen', 
+                                                  'mammouse_crudeprev': 'Met_Breast_Screen', 'csmoking_crudeprev': 'Currently_Smoke',
+                                                  'obesity_crudeprev': 'BMI_Obese'})
+        del results_df, results_df2
+        return results_df3
+        
+    def places_tract(self):
+        if isinstance(self.state, str):
+            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr="{self.state}"', limit = "10000")
+        else:
+            state = '("' + '","'.join(self.state) + '")'            
+            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr in {state}', limit = "10000")
+
+        results_df = pd.DataFrame.from_records(results)
+        results_df2 = results_df.loc[:, results_df.columns.isin(['tractfips', 'countyfips', 'countyname', 
+                                                                 'stateabbr', 'cancer_crudeprev', 
+                                                                 'colon_screen_crudeprev', 'csmoking_crudeprev', 
+                                                                 'mammouse_crudeprev', 'obesity_crudeprev'])]
+        
+        results_df3 = results_df2.rename(columns={'tractfips': 'FIPS', 'countyfips': 'FIPS5', 
+                                                  'countyname': 'County',  'stateabbr': 'State', 
+                                                  'cancer_crudeprev': 'Cancer_Prevalence',
+                                                  'colon_screen_crudeprev': 'Met_Colon_Screen', 
+                                                  'mammouse_crudeprev': 'Met_Breast_Screen', 
+                                                  'csmoking_crudeprev': 'Currently_Smoke',
+                                                  'obesity_crudeprev': 'BMI_Obese'})
+        
+        del results_df, results_df2
+        return results_df3
