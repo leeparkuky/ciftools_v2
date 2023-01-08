@@ -549,21 +549,124 @@ def gen_facility_data(location:Union[List[str], str], taxonomy:List[str] = ['Gas
     data_dict = {}
     if isinstance(location, str):
         data_dict['nppes'] = nppes(location)
-        functions = [mammography, hpsa, fqhc, lung_cancer_screening]
-        dataset_names = ['mammography', 'hpsa','fqhc','lung_cancer_screening']
+        functions = [mammography, hpsa, fqhc, lung_cancer_screening, toxRel_data, superfund]
+        dataset_names = ['mammography', 'hpsa','fqhc','lung_cancer_screening', 'tri_facility', 'superfund_site']
         datasets = Parallel(n_jobs=-1)(delayed(f)(location) for f in functions)
         for name, df in zip(dataset_names, datasets):
             data_dict[name] = df
         return data_dict
     else:
         data_dict['nppes'] = nppes(location)
-        functions = [mammography, hpsa, fqhc]
-        dataset_names = ['mammography', 'hpsa','fqhc']
+        functions = [mammography, hpsa, fqhc, toxRel_data, superfund]
+        dataset_names = ['mammography', 'hpsa','fqhc','tri_facility', 'superfund_site']
         datasets = Parallel(n_jobs=-1)(delayed(f)(location) for f in functions)
         for name, df in zip(dataset_names, datasets):
             data_dict[name] = df
         data_dict['lung_cancer_screening'] = lung_cancer_screening(location)
         return data_dict
+
+    
+    
+###################################################################
+## toxRel_data
+###################################################################
+    
+def toxRel_data(location:Union[str, List[str]]):
+    from tqdm import tqdm
+    import os
+    resp = requests.get('https://data.epa.gov/efservice/downloads/tri/mv_tri_basic_download/2021_US/csv', stream=True)
+    total = int(resp.headers.get('content-length', 0))
+    fname = os.path.join(getcwd(), 'toxRel.csv')
+    chunk_size = int(1024*1024/2)
+    with open(fname, 'wb') as file, tqdm(
+        desc="downloading toxRel data file",
+        total=total,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024,
+        leave = True
+    ) as bar:
+        for data in resp.iter_content(chunk_size=chunk_size):
+            size = file.write(data)
+            bar.update(size)
+
+    with open(fname, newline='') as csvfile:
+        reader = DictReader(csvfile)
+        ############
+        colnames = ['FRS ID', 'FACILITY NAME',    #   'STREET ADDRESS','CITY','ST','ZIP',
+                    'LATITUDE', 'LONGITUDE', 'COUNTY', 'CHEMICAL']
+        csv_keys = ['3. FRS ID', '4. FACILITY NAME', #. '5. STREET ADDRESS', '6. CITY', '8. ST', '9. ZIP',
+                   '12. LATITUDE', '13. LONGITUDE', '7. COUNTY', '34. CHEMICAL']
+        data_dict = dict(zip(colnames, [[] for _ in range(len(colnames))]))
+        data_dict['Address'] = []
+        if isinstance(location, str):
+            assert len(location) == 2
+            for row in reader:
+                if (row['8. ST'] == location.upper()) & (
+                    row['43. CARCINOGEN'] == 'YES'):
+                    address = row['5. STREET ADDRESS'].title() + ', ' + row['6. CITY'].title() + ', ' + row['8. ST'].upper() + ' ' + str(row['9. ZIP'])
+                    data_dict['Address'].append(address)
+                    for dict_key, row_key in zip(colnames, csv_keys):
+                        data_dict[dict_key].append(row[row_key]) 
+        else:
+            for loc in location:
+                assert len(loc) == 2
+            for row in reader:
+                if (row['8. ST'] in [x.upper() for x in location]) & (
+                    row['43. CARCINOGEN'] == 'YES'):
+                    address = row['5. STREET ADDRESS'].title() + ', ' + row['6. CITY'].title() + ', ' + row['8. ST'].upper() + ' ' + str(row['9. ZIP'])
+                    data_dict['Address'].append(address)
+                    for dict_key, row_key in zip(colnames, csv_keys):
+                        data_dict[dict_key].append(row[row_key])  
+                    
+    df = pd.DataFrame(data_dict)
+    remove(fname)
+    del data_dict
+    df = df.groupby(["FRS ID", 'FACILITY NAME', 
+                                 'Address', 'LATITUDE', 
+                                 'LONGITUDE', 'COUNTY'])['CHEMICAL'].agg(lambda col: ', '.join(col)).reset_index()
+    df['Notes'] = 'Chemicals relased: ' + df['CHEMICAL']
+    df = df[['FACILITY NAME', 'Address', 'LATITUDE', 'LONGITUDE', 'COUNTY', 'Notes']]
+    df = df.rename(columns = {'FACILITY NAME': 'Name', 'LATITUDE': 'latitude', 'LONGITUDE': 'longitude'})
+    df['Type'] = 'Toxic Release Inventory Facility'
+    df['Phone_number'] = pd.NA
+    return df[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']]
+
+    
+    
+    
+    
+###################################################################
+## superfund
+###################################################################
+
+    
+def gen_single_superfund(location: str):
+    assert len(location) == 2
+    url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location.upper()}/CSV'
+    sf = pd.read_csv(url)
+    sf2 = sf.loc[sf.NPL.isin(['Currently on the Final NPL', 'Deleted from the Final NPL'])]
+    sf3 = sf2[['SITE_NAME', 'SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE',
+             'SITE_FIPS_CODE', 'NPL', 'LATITUDE', 'LONGITUDE']]
+    sf3 = sf3.assign(Address = sf3['SITE_STRT_ADRS1'] + ', ' + sf3['SITE_CITY_NAME'] + ', ' + sf3['SITE_STATE'] + ' ' + sf3['SITE_ZIP_CODE'].astype(str))
+    sf3 = sf3.rename(columns = {'SITE_NAME':'Name', 'SITE_FIPS_CODE':'FIPS5', 'NPL':'Notes',
+                              'LATITUDE':'latitude', 'LONGITUDE':'longitude'})
+    sf3.drop(['SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE'], axis=1, inplace=True)
+    sf3['Type'] = 'Superfund Site'
+    sf3['Phone_number'] = pd.NA
+    del sf, sf2
+    return sf3[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']]
+
+
+def superfund(location: Union[str, List[str]]):
+    if isinstance(location, str):
+        df = gen_single_superfund(location)
+    else:
+        datasets = []
+        for loc in location:
+            datasets.append(gen_single_superfund(loc))
+        df = pd.concat(datasets, axis = 0).reset_index(drop = True)
+    return df
     
     
 
@@ -699,6 +802,7 @@ def download_fqhc_data(location: Union[str, List[str]]):
                     for dict_key, row_key in zip(colnames, csv_keys):
                         data_dict[dict_key].append(row[row_key])   
     output = pd.DataFrame(data_dict)
+    del data_dict
     remove(fname)
     return output
 
