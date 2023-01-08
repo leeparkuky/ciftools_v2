@@ -11,7 +11,7 @@ class ACSConfig:
     year: Union[str, int]
     state_fips: Union[str, int, List[str], List[int]]
     query_level: str        
-    acs_group: str
+    acs_group: Union[str, List[str]]
     acs_type: str = None
     
     
@@ -63,4 +63,6 @@ class ACSConfig:
             res = gen_variable_names(self.year, self.acs_type, self.acs_group)
             self._variables = res[0]
             self.var_desc = pd.DataFrame(res[1][1:], columns = res[1][0])
+            self.var_desc = self.var_desc.loc[self.var_desc.name.isin(self._variables),:]
+                
         return self._variables
