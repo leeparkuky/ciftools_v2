@@ -12,7 +12,8 @@ from io import BytesIO
 from zipfile import ZipFile
 from glob import glob
 from typing import Union, List
-
+from os import getcwd, remove
+from csv import DictReader
 # for ascync requests
 from aiohttp import ClientSession
 # cfg
@@ -148,11 +149,13 @@ def custom_acs_data(key, config = None, **kwargs):
 ###################################################################################################################
 
 @dataclass
-class sdoh:
-    year: Union[str, int]
+class acs_sdoh:
+    year: int
     state_fips: Union[str, int]
     query_level: str        
     key: str
+    
+    
     
     def cancer_infocus_download(self):
         cancer_infocus_funcs = [self.__getattribute__(x) for x in self.__dir__() if re.match('gen_\w.+_table', x)]
@@ -165,6 +168,14 @@ class sdoh:
         res = Parallel(n_jobs=-1)(delayed(fun)() for fun in self.functions.values())
         res = Parallel(n_jobs=-1)(delayed(self.cleanup_geo_col)(df, self.query_level) for df in res)
         return {key:val for key, val in zip(self.functions.keys(), res)}
+    
+    
+    def clean_functions(self):
+        if hasattr(self, 'functions'):
+            self.functions = {}
+        else:
+            pass
+
     
     @staticmethod
     def cleanup_geo_col(df, level):
@@ -188,12 +199,10 @@ class sdoh:
             state_name = df.state.apply(lambda x: states[x])
             columns = pd.DataFrame(zip(zip_name, state_name), columns = ['ZCTA5','State'])
             
-        if level in ['county subdivision','tract','block', 'county', 'zip']:
-            df = df.drop(df.columns[df.columns.str.islower()].tolist() + ['NAME'], axis = 1)
-            return pd.concat([columns, df], axis = 1)
+        geo_name = ['county subdivision','tract','block', 'county', 'zip', 'state']
+        df = df.drop(df.columns[df.columns.isin(geo_name)].tolist() + ['NAME'], axis = 1)
+        return pd.concat([columns, df], axis = 1)
         
-        else:
-            raise ValueError('Please select levels among {county, county subdivision, tract, block, zip}')
             
             
     def add_function(self, func, name):
@@ -242,7 +251,7 @@ class sdoh:
             df['medicaid'] = df.loc[:,medicaid_col].astype(int).sum(axis = 1)/df.C27007_001E.astype(int)
             df.drop(config.variables, axis = 1, inplace = True)
             return df
-        self.add_function(transform_df, 'insurnace')
+        self.add_function(transform_df, 'insurance')
         if return_table:
             return transform_df()
         
@@ -282,7 +291,7 @@ class sdoh:
             df['three_or_more_vehicle'] = df.B08141_005E.astype(int)/df.B08141_001E.astype(int)
             df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
             return df
-        self.add_function(transform_df, 'transformation')
+        self.add_function(transform_df, 'transportation')
         if return_table:
             return transform_df()
 
@@ -566,7 +575,7 @@ def gen_facility_data(location:Union[List[str], str], taxonomy:List[str] = ['Gas
 def mammography(location: Union[str, List[str]]):
 
     url = urllib.request.urlopen("http://www.accessdata.fda.gov/premarket/ftparea/public.zip")
-
+    
     with ZipFile(BytesIO(url.read())) as my_zip_file:
         df = pd.DataFrame(my_zip_file.open(my_zip_file.namelist()[0]).readlines(), columns= ['main'])
         df = df.main.astype(str).str.split('|', expand = True)
@@ -587,9 +596,33 @@ def mammography(location: Union[str, List[str]]):
 ## hpsa
 ###################################################################
 
+def download_hpsa_data():
+    from tqdm import tqdm
+    import os
+    resp = requests.get('https://data.hrsa.gov/DataDownload/DD_Files/BCD_HPSA_FCT_DET_PC.xlsx', stream=True)
+    total = int(resp.headers.get('content-length', 0))
+    fname = os.path.join(getcwd(), 'hpsa.xlsx')
+    chunk_size = 1024*10
+    with open(fname, 'wb') as file, tqdm(
+        desc="downloading hpsa data file",
+        total=total,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024,
+        leave = True
+    ) as bar:
+        for data in resp.iter_content(chunk_size=chunk_size):
+            size = file.write(data)
+            bar.update(size)
+    output = pd.read_excel(fname, engine = 'openpyxl')
+    remove(fname)
+    return output
+
+
+
 
 def hpsa(location: Union[str, List[str]]):
-    df= pd.read_excel('https://data.hrsa.gov/DataDownload/DD_Files/BCD_HPSA_FCT_DET_PC.xlsx')
+    df= download_hpsa_data()
     df.columns = df.columns.str.replace(' ','_')
     if isinstance(location, str):
         df = df.loc[df.Primary_State_Abbreviation.eq(location)&
@@ -624,22 +657,55 @@ def hpsa(location: Union[str, List[str]]):
 ###################################################################
 
 
+def download_fqhc_data(location: Union[str, List[str]]):
+    from tqdm import tqdm
+    import os
+    resp = requests.get('https://data.hrsa.gov//DataDownload/DD_Files/Health_Center_Service_Delivery_and_LookAlike_Sites.csv', stream = True)    
+    total = int(resp.headers.get('content-length', 0))
+    fname = os.path.join(getcwd(), 'fqhc.csv')
+    chunk_size = 1024*10
+    with open(fname, 'wb') as file, tqdm(
+        desc="downloading fqhc data file",
+        total=total,
+        unit='iB',
+        unit_scale=True,
+        unit_divisor=1024,
+        leave = True
+    ) as bar:
+        for data in resp.iter_content(chunk_size=chunk_size):
+            size = file.write(data)
+            bar.update(size)
+            
+    with open(fname, newline='') as csvfile:
+        reader = DictReader(csvfile)
+        colnames = ['Health_Center_Type', 'Site_Name','Site_Address','Site_City','Site_State_Abbreviation',
+                 'Site_Postal_Code','Site_Telephone_Number', 
+                 'Health_Center_Service_Delivery_Site_Location_Setting_Description',
+                 'Geocoding_Artifact_Address_Primary_X_Coordinate',
+                 'Geocoding_Artifact_Address_Primary_Y_Coordinate']
+        csv_keys = [x.replace('_', ' ') for x in colnames]
+        data_dict = dict(zip(colnames, [[] for _ in range(len(colnames))]))
+        for row in reader:
+            if isinstance(location, str):
+                if (row['Site State Abbreviation'] == location.upper()) & (
+                    row['Health Center Type'] == 'Federally Qualified Health Center (FQHC)') & (
+                    row['Site Status Description'] == 'Active'):
+                    for dict_key, row_key in zip(colnames, csv_keys):
+                        data_dict[dict_key].append(row[row_key])   
+            else:
+                if (row['Site State Abbreviation'] in [x.upper() for x in location]) & (
+                    row['Health Center Type'] == 'Federally Qualified Health Center (FQHC)') & (
+                    row['Site Status Description'] == 'Active'):
+                    for dict_key, row_key in zip(colnames, csv_keys):
+                        data_dict[dict_key].append(row[row_key])   
+    output = pd.DataFrame(data_dict)
+    remove(fname)
+    return output
+
+
+
 def fqhc(location: Union[str, List[str]]):
-    df= pd.read_csv('https://data.hrsa.gov//DataDownload/DD_Files/Health_Center_Service_Delivery_and_LookAlike_Sites.csv')
-    df.columns = df.columns.str.replace(' ','_')
-    if isinstance(location, str):
-        df = df.loc[df.State_and_County_Federal_Information_Processing_Standard_Code.eq(location)&
-            df.Health_Center_Type.eq('Federally Qualified Health Center (FQHC)')&
-            df.Site_Status_Description.eq('Active')].reset_index(drop = True)
-    else:
-        df = df.loc[df.State_and_County_Federal_Information_Processing_Standard_Code.isin(location)&
-            df.Health_Center_Type.eq('Federally Qualified Health Center (FQHC)')&
-            df.Site_Status_Description.eq('Active')].reset_index(drop = True)
-    df = df[['Health_Center_Type', 'Site_Name','Site_Address','Site_City','Site_State_Abbreviation',
-             'Site_Postal_Code','Site_Telephone_Number', 
-             'Health_Center_Service_Delivery_Site_Location_Setting_Description',
-             'Geocoding_Artifact_Address_Primary_X_Coordinate',
-             'Geocoding_Artifact_Address_Primary_Y_Coordinate']]
+    df= download_fqhc_data(location)
     df['Type'] = 'FQHC'
     df['Address'] = df['Site_Address'] + ', ' + df['Site_City'] + ', ' + \
                     df['Site_State_Abbreviation'] + ' ' + df['Site_Postal_Code']
@@ -680,7 +746,7 @@ def parse_address(address):
     return street, phone_number
 
 
-
+taxonomy = ['Gastroenterology','colon','obstetrics']
 def gen_nppes_by_taxonomy(taxonomy: str, location: str):
     count = 0
     result_count = 200
@@ -688,7 +754,7 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
     datasets = []
     while result_count == 200:
         count += 1
-        url = f'https://npiregistry.cms.hhs.gov/api/?version=2.1&address_purpose=LOCATION&number=&state={location}&taxonomy_description={taxonomy}&skip={skip}&limit=200'
+        url = f'https://npiregistry.cms.hhs.gov/api/?version=2.1&address_purpose=LOCATION&number=&state={location}&taxonomy_description={taxonomy}&skip={200*(count -1)}&limit=200'
         resp = requests.get(url)
         output = resp.json()
         result_count = output['result_count']
@@ -704,7 +770,7 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
             return df[['Type','Name','Address','Phone_number', 'Notes']]
         else:
             datasets.append(df[['Type','Name','Address','Phone_number', 'Notes']])
-            result = pd.concat(datasets, axis = 0)
+            result = pd.concat(datasets, axis = 0).reset_index(drop = True)
             return result
         
 def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterology','colon','obstetrics']) -> pd.DataFrame:
@@ -778,7 +844,8 @@ def process_lcs_data(file_path, location):
 
 def remove_chromedriver(chrome_driver_path):
     import shutil
-    shutil.rmtree(os.path.join(*chrome_driver_path.split('/')[:-1]))
+    from os import path
+    shutil.rmtree(path.join(*chrome_driver_path.split('/')[:-1]))
 
     
 def lung_cancer_screening(location: Union[str, List[str]]):
@@ -787,7 +854,8 @@ def lung_cancer_screening(location: Union[str, List[str]]):
     else:
         Parallel(n_jobs=-1)(delayed(lung_cancer_screening_file_download)(loc, len(location), w) for loc, w in zip(location, [x*20 for x in range(len(location))]))
     downloads = glob('./ACRLCSDownload*.csv')
-    assert len(downloads) == len(location)
+    if isinstance(location, list):
+        assert len(downloads) == len(location)
     if len(downloads) > 1:
         datasets = Parallel(n_jobs=-1)(delayed(process_lcs_data)(path, location) for path in downloads)
         df = pd.concat(datasets, axis = 0)
@@ -797,7 +865,7 @@ def lung_cancer_screening(location: Union[str, List[str]]):
     remove_chromedriver(chrome_driver_path)
     df = df.reset_index(drop = True)
     for file in downloads:
-        os.remove(file)
+        remove(file)
     return df
 
 
