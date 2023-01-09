@@ -7,8 +7,8 @@ from utils import *
 class SocrataConfig:
     domain: str
     app_token: str
-    user_name: str
-    password : str
+    user_name: str = None
+    password : str = None
     
     @property
     def client(self):
@@ -16,10 +16,13 @@ class SocrataConfig:
         if hasattr(self, '_client'):
             pass
         else:
-            client = Socrata(self.domain,
-                  self.app_token,
-                  username=self.user_name,
-                  password=self.password)
+            if self.user_name:
+                client = Socrata(self.domain,
+                      self.app_token,
+                      username=self.user_name,
+                      password=self.password)
+            else:
+                client = Socrata(self.domain, self.app_token)
             self._client = client
         return self._client
 

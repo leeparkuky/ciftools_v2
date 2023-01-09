@@ -14,6 +14,7 @@ from glob import glob
 from typing import Union, List
 from os import getcwd, remove
 from csv import DictReader
+from itertools import product
 # for ascync requests
 from aiohttp import ClientSession
 # cfg
@@ -25,6 +26,8 @@ import numpy as np
 from joblib import Parallel, delayed
 # import stateDF from utils
 from utils import stateDf
+# import beautifulSoup
+from bs4 import BeautifulSoup
 
 
 
@@ -201,7 +204,9 @@ class acs_sdoh:
             
         geo_name = ['county subdivision','tract','block', 'county', 'zip', 'state']
         df = df.drop(df.columns[df.columns.isin(geo_name)].tolist() + ['NAME'], axis = 1)
-        return pd.concat([columns, df], axis = 1)
+        df = pd.concat([columns, df], axis = 1)
+        df = df.sort_values('FIPS').reset_index(drop = True)
+        return df
         
             
             
@@ -219,7 +224,6 @@ class acs_sdoh:
                     'query_level': self.query_level,
                     'acs_group': kwargs['acs_group'],
                     'acs_type': kwargs['acs_type']}
-        print(arguements)
         self.config = ACSConfig(**arguements)
         return self.config
     
@@ -1009,10 +1013,13 @@ class BLS:
             df['Unemployment Rate'] = pd.to_numeric(df['Unemployment Rate'].str.strip().str.replace(',',''), errors = 'coerce')
             df['FIPS'] = df['State']+df['County']
             df['Period'] = df.Period.str.strip()
-            if most_recent:
+            if self.most_recent:
                 df = df.loc[df.Period.str.match(re.compile('.*p\)$'))]
                 df['Period'] = [x[:-3] for x in df.Period]
-            self._bls_data = df.loc[df.State.eq(state),['FIPS','Unemployment Rate', 'Period']].sort_values('FIPS').reset_index(drop = True)
+            df = df.loc[:,['FIPS','Unemployment Rate', 'Period']].sort_values('FIPS').reset_index(drop = True)
+            df[f'Monthly Unemployment Rate ({df.Period.unique()[0]})'] = df['Unemployment Rate']*0.01
+            df = df.drop(columns=['Unemployment Rate', 'Period'])
+            self._bls_data = df
         return self._bls_data
         
 
@@ -1023,12 +1030,34 @@ class BLS:
         
 @dataclass
 class water_violation:
-    location: Union[str, List[str]]
+    state_fips: Union[str, List[str]]
     start_year: int = 2016
+    end_year  : int = None
+        
+        
+    @property
+    def location(self):
+        if hasattr(self, '_location'):
+            pass
+        else:
+            if isinstance(self.state_fips, str):
+                self._location = stateDf.loc[stateDf.FIPS2.eq(self.state_fips),'StateAbbrev'].values[0]
+            else:
+                self._location = stateDf.loc[stateDf.FIPS2.isin(self.state_fips),'StateAbbrev'].values.tolist()
+        return self._location
         
     @property
     def water_violation_data(self):
         if hasattr(self, '_water_violation_data'):
+            pass
+        else:
+            self._water_violation_data = pd.concat(self.water_violation_data_dictionary.values(), axis = 0).reset_index(drop = True)
+        return self._water_violation_data
+            
+        
+    @property
+    def water_violation_data_dictionary(self):
+        if hasattr(self, '_water_violation_data_dictionary'):
             pass
         else:
             if isinstance(self.location, str):
@@ -1037,34 +1066,50 @@ class water_violation:
             else:
                 datasets = Parallel(n_jobs=-1)(delayed(self.gen_water_violation)(loc) for loc in self.location)
                 data_dict = dict(zip(self.location, datasets))
-            self._water_violation_data = data_dict
-        return self._water_violation_data
+            self._water_violation_data_dictionary = data_dict
+        return self._water_violation_data_dictionary
         
         
     def gen_water_violation(self, state:str):
         assert len(state) == 2
-        violation = self.gen_violation(state, self.start_year)
+        violation = self.gen_violation(state, self.start_year, self.end_year)
         profile   = self.gen_profile(state)
-        violation_by_pws = violation[['PWSID','VIOLATION_ID','indicator']].groupby(['PWSID','VIOLATION_ID'], as_index = False).max().loc[:,['PWSID','indicator']].groupby('PWSID', as_index = False).sum()
+        violation_by_pws = violation[['PWSID','VIOLATION_ID','indicator']].groupby(['PWSID','VIOLATION_ID'], as_index = False).max().loc[:,['PWSID','indicator']].groupby('PWSID', as_index = False).sum() # summed the number of violations
         violation_by_pws.columns = ['PWSID','counts']
         df = profile.merge(violation_by_pws, on = 'PWSID', how='left')
-        df = df[['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE', 'counts']].groupby('COUNTY_SERVED', as_index = False).max()
+        df = df[['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE', 'counts']].groupby('COUNTY_SERVED', as_index = False).max() 
         self.testing = df
         df['County'] = df.COUNTY_SERVED.astype(str) + ' County'
-        df['StateAbbrev'] = df.PRIMACY_AGENCY_CODE.astype(str)
+        df.County[df.County.str.contains('.*Parish.*')] = df.County[df.County.str.contains('.*Parish.*')].apply(lambda x: x[:-7])
         df.drop(['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE'], axis = 1, inplace  = True)
         df.loc[df.counts.isnull(),'counts'] = 0
+        df['State'] = stateDf.loc[stateDf.StateAbbrev.eq(state), "State"].values[0]
+        
         del profile, violation
-        return df
+        if self.end_year:
+            if self.start_year == self.end_year:
+                new_name = f"PWS_Violations_in_{self.start_year}"
+            else:
+                new_name = f"PWS_Violations_Since_{self.start_year}_Until_{self.end_year}"
+        else:
+            new_name = f"PWS_Violations_Since_{self.start_year}"
+        df.rename(columns = {'counts':new_name}, inplace = True)
+        
+        return df[['County','State',new_name]]
         
     @staticmethod
-    def gen_violation(state:str, start_year: int):
+    def gen_violation(state:str, start_year: int, end_year:int = None):
         url_violation = f'https://data.epa.gov/efservice/VIOLATION/IS_HEALTH_BASED_IND/Y/PRIMACY_AGENCY_CODE/{state}/CSV'
         violation = pd.read_csv(url_violation)
         violation.columns = violation.columns.str.replace(re.compile('.*\.'),"")
         violation = violation.loc[violation.COMPL_PER_BEGIN_DATE.notnull() ,:]
         violation['date'] = pd.to_datetime(violation.COMPL_PER_BEGIN_DATE)
-        violation = violation.loc[violation.date.dt.year >= start_year, :].reset_index(drop = True)
+        if end_year:
+            violation = violation.loc[(
+                violation.date.dt.year >= start_year) & (
+                violation.date.dt.year <= end_year), :].reset_index(drop = True)
+        else:
+            violation = violation.loc[violation.date.dt.year >= start_year, :].reset_index(drop = True)
         violation['indicator'] = 1
         return violation
 
@@ -1100,8 +1145,9 @@ class water_violation:
 ## Food Desert      ########################################################
 ############################################################################
 
-class food_desert:
-    def __init__(self, state_fips: Union[ str,  List[str]]):
+class food_desert:  
+    def __init__(self, state_fips: Union[ str,  List[str]], var_name:str = 'LILATracts_Vehicle'):
+        self.var_name = var_name
         response = requests.get('https://www.ers.usda.gov/data-products/food-access-research-atlas/download-the-data/')
         soup = BeautifulSoup(response.content, "html.parser")
         hrefs = soup.find_all('a', href = True)
@@ -1115,10 +1161,10 @@ class food_desert:
         if hasattr(self, '_food_desert_data'):
             pass
         else:
-            self._food_desert_data = self.download_data(self.state_fips)
+            self._food_desert_data = self.download_data(self.state_fips, var_name = self.var_name)
         return self._food_desert_data
     
-    def download_data(self, state):
+    def download_data(self, state, var_name):
         from tqdm import tqdm
         import os
         resp = requests.get(self.path, stream=True)
@@ -1146,17 +1192,18 @@ class food_desert:
             for s in state:
                 assert len(s) == 2
             df = df.loc[df.State.isin(state)].reset_index(drop = True)
-        df = df[['CensusTract', 'LILATracts_Vehicle', 'OHU2010']]
+        df = df[['CensusTract', var_name, 'OHU2010']]
         df2 = df.copy()
         data_dictionary = {}
         # Tract
         df.rename(columns = {'CensusTract':'FIPS'}, inplace = True)
         df['FIPS'] = df.FIPS.astype(str)
+        df.drop('OHU2010', axis = 1, inplace = True)
         data_dictionary['Tract'] = df
         # County
         df2['FIPS'] = [str(x)[:5] for x in df2.CensusTract]
-        df2 = df2[['FIPS','LILATracts_Vehicle','OHU2010']].groupby('FIPS', as_index = False).apply(lambda x: pd.Series(np.average(x['LILATracts_Vehicle'], weights=x['OHU2010'])))
-        df2.columns = ['FIPS','LILATracts_Vehicle']
+        df2 = df2[['FIPS',var_name,'OHU2010']].groupby('FIPS', as_index = False).apply(lambda x: pd.Series(np.average(x[var_name], weights=x['OHU2010'])))
+        df2.columns = ['FIPS',var_name]
         df2['FIPS'] = df2.FIPS.astype(str)
         data_dictionary['County'] = df2
         remove(fname)
@@ -1184,8 +1231,19 @@ class scp_cancer_data:
             data_dict = {}
             data_dict['incidence'] = self.scp_cancer_inc()
             data_dict['mortality'] = self.scp_cancer_mor()
+            data_dict['incidence']['AAR'] = self.convert_dtype(data_dict['incidence'].AAR)
+            data_dict['mortality']['AAR'] = self.convert_dtype(data_dict['mortality'].AAR)
             self._cancer_data = data_dict
         return self._cancer_data
+        
+    @staticmethod
+    def convert_dtype(series):
+        series = series.copy()
+        series = series.astype(str).str.strip()
+        series[~series.str.contains('\d+\.?\d*')] = np.nan    
+        series = series.astype(float)
+        return series        
+        
         
         
     def scp_cancer_inc(self):
@@ -1238,7 +1296,10 @@ class scp_cancer_data:
         df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
         df['Site'] = cancer_site
         df['Type'] = 'Incidence'
-        df = df[['FIPS', 'County', 'Site', 'Type', 'AAR', 'AAC']]
+        df['State'] = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+        df['AAR'] = df.AAR.replace('* ', np.nan).astype(float)
+
+        df = df[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']].sort_values('FIPS')
         return df
         
 
@@ -1286,12 +1347,13 @@ class scp_cancer_data:
         assert sex in list('012')
         assert len(cancer_site_id) == 3
         path = f'https://www.statecancerprofiles.cancer.gov/deathrates/index.php?stateFIPS={state}&areatype=county&cancer={cancer_site_id}&race=00&sex={sex}&age=001&year=0&type=death&sortVariableName=rate&sortOrder=desc&output=1'
-        df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,2,8],  names=['County', 'FIPS', 'AAR', 'AAC'],
+        df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,3,9],  names=['County', 'FIPS', 'AAR', 'AAC'],
                          dtype={'County':str, 'FIPS':str}).dropna()
         df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
         df['Site'] = cancer_site
         df['Type'] = 'Incidence'
-        df = df[['FIPS', 'County', 'Site', 'Type', 'AAR', 'AAC']]
+        df['State'] = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+        df = df[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']].sort_values('FIPS')
         return df
 
 ##################################################################
@@ -1301,10 +1363,20 @@ class scp_cancer_data:
 
 @dataclass
 class places_data:
-    state: Union[str, List[str]] # example: KY
+    state_fips: Union[str, List[str]] 
     config: SocrataConfig
     
     
+    @property
+    def state(self):
+        if hasattr(self, '_state'):
+            pass
+        else:
+            if isinstance(self.state_fips, str):
+                self._state = stateDf.loc[stateDf.FIPS2.eq(self.state_fips),'StateAbbrev'].values[0]
+            else:
+                self._state = stateDf.loc[stateDf.FIPS2.isin(self.state_fips),'StateAbbrev'].values.tolist()
+        return self._state
     
     @property
     def places_data(self):
@@ -1320,18 +1392,25 @@ class places_data:
             results = self.config.client.get("i46a-9kgh", where=f'stateabbr="{self.state}"')
         else:
             state = '("' + '","'.join(self.state) + '")'
-            print(state)
             results = self.config.client.get("i46a-9kgh", where=f'stateabbr in {state}')
         results_df = pd.DataFrame.from_records(results)
         results_df2 = results_df.loc[:, results_df.columns.isin(['countyfips', 'countyname', 'stateabbr', 'cancer_crudeprev', 
                                   'cervical_crudeprev', 'colon_screen_crudeprev',
                                   'csmoking_crudeprev', 'mammouse_crudeprev', 'obesity_crudeprev'])]
-
-        results_df3 = results_df2.rename(columns={'countyfips': 'FIPS', 'countyname': 'County', 'stateabbr': 'State', 
-                                                  'cancer_crudeprev': 'Cancer_Prevalence','cervical_crudeprev': 'Met_Cervical_Screen',
+        
+        state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in self.state}
+        states_name = results_df2.stateabbr.copy().apply(lambda x: state_abbr_to_name[x]).tolist()
+        results_df3 = results_df2.rename(columns={'countyfips': 'FIPS', 'countyname': 'County',  
+                                                  'cancer_crudeprev': 'Cancer_Prevalence',
+                                                  'cervical_crudeprev': 'Met_Cervical_Screen',
                                                   'colon_screen_crudeprev': 'Met_Colon_Screen', 
-                                                  'mammouse_crudeprev': 'Met_Breast_Screen', 'csmoking_crudeprev': 'Currently_Smoke',
+                                                  'mammouse_crudeprev': 'Met_Breast_Screen', 
+                                                  'csmoking_crudeprev': 'Currently_Smoke',
                                                   'obesity_crudeprev': 'BMI_Obese'})
+        results_df3['State'] = states_name
+        results_df3 = results_df3[['FIPS','County','State','Cancer_Prevalence', 
+                                  'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                  'Met_Breast_Screen','BMI_Obese']]
         del results_df, results_df2
         return results_df3
         
@@ -1347,14 +1426,203 @@ class places_data:
                                                                  'stateabbr', 'cancer_crudeprev', 
                                                                  'colon_screen_crudeprev', 'csmoking_crudeprev', 
                                                                  'mammouse_crudeprev', 'obesity_crudeprev'])]
-        
+        results_df3['State'] = states_name
         results_df3 = results_df2.rename(columns={'tractfips': 'FIPS', 'countyfips': 'FIPS5', 
-                                                  'countyname': 'County',  'stateabbr': 'State', 
+                                                  'countyname': 'County',   
                                                   'cancer_crudeprev': 'Cancer_Prevalence',
                                                   'colon_screen_crudeprev': 'Met_Colon_Screen', 
                                                   'mammouse_crudeprev': 'Met_Breast_Screen', 
                                                   'csmoking_crudeprev': 'Currently_Smoke',
                                                   'obesity_crudeprev': 'BMI_Obese'})
         
+        results_df3 = results_df3[['FIPS','FIPS5','County','State','Cancer_Prevalence', 
+                                  'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']]
         del results_df, results_df2
         return results_df3
+
+    
+##############
+# Urban_rural
+##############
+
+def urban_rural_counties(state_fips: Union[str, List[str]]):
+    urban_rural_counties = pd.read_excel('https://www2.census.gov/geo/docs/reference/ua/PctUrbanRural_County.xls',
+                                        dtype = {'STATE':str, 'COUNTY':str})
+    if isinstance(state_fips, str):
+        urban_rural_counties = urban_rural_counties.loc[urban_rural_counties.STATE.eq(state_fips),['STATE','COUNTY','STATENAME','COUNTYNAME','POPPCT_URBAN']]
+    else:
+        urban_rural_counties = urban_rural_counties.loc[urban_rural_counties.STATE.isin(state_fips),['STATE','COUNTY','STATENAME','COUNTYNAME','POPPCT_URBAN']]
+    urban_rural_counties['FIPS'] = urban_rural_counties.STATE + urban_rural_counties.COUNTY
+    urban_rural_counties = urban_rural_counties[['FIPS','COUNTYNAME','STATENAME','POPPCT_URBAN']]
+    urban_rural_counties.rename(columns = {'COUNTYNAME': 'County','STATENAME':'State','POPPCT_URBAN':'Urban_Percentage'}, inplace = True)
+    urban_rural_counties['Urban_Percentage'] = urban_rural_counties.Urban_Percentage * 0.01
+    urban_rural_counties['County'] = urban_rural_counties.County + ' County'
+    urban_rural_counties = urban_rural_counties.sort_values('FIPS').reset_index(drop = True)
+    return urban_rural_counties
+
+
+
+
+    
+if __name__ == '__main__':
+    import argparse
+    import pickle
+    import os
+    from tqdm import tqdm
+    parser = argparse.ArgumentParser()
+    # where to save the data
+    parser.add_argument('--download_dir', required = False, default = None)
+    # arguments for acs config
+    parser.add_argument('--state_fips', nargs = '+', type = int, required = True)
+    parser.add_argument('--census_api_key', required = True)
+    parser.add_argument('--query_level', nargs = '+', required = True, 
+                        choices = ['county subdivision','tract','block', 'county', 'state','zip'])
+    parser.add_argument('--year', required = True, type = int)
+    # argument for SocrataConfig
+    parser.add_argument('--socrata_user_name', required = False, default = None)
+    parser.add_argument('--socrata_password', required = False, default = None)
+
+    args = parser.parse_args()
+    if len(args.state_fips) == 1:
+        state_fips = str(args.state_fips[0])
+    else:
+        state_fips = [str(x) for x in args.state_fips]
+        
+    ####### query level can be multiple
+   
+    sdoh_by_query_level = {}
+
+    # Setting tqdm bar
+    pbar = tqdm(range(5), desc = "collecting acs data", leave = False)
+
+    
+    #### Step 1: ACS data
+    
+    for query_level in args.query_level:
+        sdoh = acs_sdoh(args.year, state_fips, query_level, key = args.census_api_key)
+        sdoh_by_query_level[query_level] = sdoh.cancer_infocus_download()
+
+    # update tqdm
+    pbar.update(1)
+    pbar.set_description("collecting cancer data")
+
+    
+    #### Step 2: Cancer Data        
+    # cancer data
+    for level in args.query_level:
+        if level not in ['county','tract']:
+            import warnings 
+            warnings.warn("cancer data is only avaialbe at county or tract level")
+            break
+    cancer = scp_cancer_data(state_fips)
+    sdoh_by_query_level['cancer'] = cancer.cancer_data 
+        
+        
+        
+    # update tqdm
+    pbar.update(1)
+    pbar.set_description("collecting facility data")
+    
+    
+    #### Step 3: Facility Data
+    # facility data
+    from utils import stateDf
+    location = stateDf.loc[stateDf.FIPS2.isin(state_fips), 'StateAbbrev'].values.tolist()
+    
+    sdoh_by_query_level['facility'] = gen_facility_data(location)
+    sdoh_by_query_level['facility']['all'] = pd.concat(sdoh_by_query_level['facility'].values(), axis = 0).reset_index(drop = True)
+    
+
+    
+    ##################################
+    ## Append other datasets to sdoh_by_query_level
+    ##################################
+    
+    # risk_and_screening
+    if args.socrata_user_name:
+        kwargs = {"domain": "chronicdata.cdc.gov",
+              "app_token": "nx4zQ2205wpLwaaaZeZp9zAOs",
+                 "user_name": args.socrata_user_name,
+                 "password": args.socrata_password}
+    else:
+        kwargs = {"domain": "chronicdata.cdc.gov",
+              "app_token": "nx4zQ2205wpLwaaaZeZp9zAOs"}
+
+    cfg = SocrataConfig(**kwargs)
+
+    def cdc_risk_and_screening(state_fips = state_fips, cfg = cfg):
+        cdc = places_data(state_fips, cfg)
+        return cdc.places_data
+    
+    # BLS
+    def bls_func(state_fips = state_fips):
+        bls = BLS(state_fips)
+        return bls.bls_data
+    
+    # Food Desert
+    def food_desert_func(state_fips = state_fips):
+        fd = food_desert(state_fips)
+        return fd.food_desert_data
+    
+    # Water Violation (multiprocessing if state_fips is a list)
+    def water_violation_func(state_fips = state_fips):
+        wv = water_violation(state_fips)
+        return wv.water_violation_data
+            
+    # Urban Rural
+    def urban_rural_func(state_fips = state_fips):
+        return urban_rural_counties(state_fips)
+    
+    ### Step 4: Other Data    
+    # Using joblibs, retrieve and allocation datasets concurrently
+    # water violation is the only function that runs concurrently if state_fips is a list of more than one state_fips code
+    # update tqdm
+    pbar.update(1)
+    pbar.set_description("collecting bls, food desert, water violation, urban-rural-counties, and risk-and-screening data")
+
+    if isinstance(state_fips, str):
+        functions = [food_desert_func, cdc_risk_and_screening, bls_func, urban_rural_func, water_violation_func]
+        dataset_name = ['food_desert','cdc','bls','urban_rural','water_violation']
+        res = Parallel(n_jobs = -1)(delayed(f)() for f in functions)
+        other_data = {k: v for k,v in zip(dataset_name, res)}
+    else:
+        functions = [food_desert_func, cdc_risk_and_screening, bls_func, urban_rural_func]
+        dataset_name = ['food_desert','cdc','bls', 'urban_rural']
+        res = Parallel(n_jobs = -1)(delayed(f)() for f in functions)
+        other_data = {k: v for k,v in zip(dataset_name, res)}
+        other_data['water_violation'] = water_violation_func()
+        
+    
+    # appending cdc
+    sdoh_by_query_level['county']['risk_and_screening'] = other_data['cdc']['county']
+    sdoh_by_query_level['tract']['risk_and_screening']  = other_data['cdc']['tract']
+    
+    # appending bls
+    sdoh_by_query_level['county']['bls_unemployment']   = other_data['bls']
+    
+    # appending food_desert
+    sdoh_by_query_level['county']['food_desert'] = other_data['food_desert']['County']
+    sdoh_by_query_level['tract']['food_desert']  = other_data['food_desert']['Tract']
+    
+    # appending water violation
+    sdoh_by_query_level['county']['water_violation'] = other_data['water_violation']
+    pbar.update(1)
+
+    # appending urban_rural
+    sdoh_by_query_level['county']['urban_rural'] = other_data['urban_rural']
+        
+    if args.download_dir:
+        file_path = os.path.join(args.download_dir, 'cif_raw_data.pickle')
+    else:
+        file_path = os.path.join(os.getcwd(), 'cif_raw_data.pickle')
+                        
+    with open(file_path, 'wb') as dataset:
+        pickle.dump(sdoh_by_query_level, dataset, protocol=pickle.HIGHEST_PROTOCOL)
+    print(f'dataset is stored at {file_path}')
+
+    
+    
+    
+    
+    
+    
