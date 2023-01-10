@@ -648,7 +648,7 @@ def toxRel_data(location:Union[str, List[str]]):
 def gen_single_superfund(location: str):
     assert len(location) == 2
     url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location.upper()}/CSV'
-    sf = pd.read_csv(url)
+    sf = pd.read_csv(url, dtype = {'SITE_FIPS_CODE':str})
     sf2 = sf.loc[sf.NPL.isin(['Currently on the Final NPL', 'Deleted from the Final NPL'])]
     sf3 = sf2[['SITE_NAME', 'SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE',
              'SITE_FIPS_CODE', 'NPL', 'LATITUDE', 'LONGITUDE']]
@@ -658,14 +658,19 @@ def gen_single_superfund(location: str):
     sf3.drop(['SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE'], axis=1, inplace=True)
     sf3['Type'] = 'Superfund Site'
     sf3['Phone_number'] = pd.NA
+    
     del sf, sf2
-    return sf3[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']]
+    return sf3[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude', 'FIPS5']]
 
 
 def superfund(location: Union[str, List[str]]):
     if isinstance(location, str):
+        if location.isnumeric():
+            location = stateDf.loc[stateDf.FIPS2.eq(location),'StateAbbrev'].values[0]
         df = gen_single_superfund(location)
     else:
+        if any([x.isnumeric() for x in location]):
+            location = stateDf.loc[stateDf.FIPS2.isin(location),'StateAbbrev'].values.tolist()
         datasets = []
         for loc in location:
             datasets.append(gen_single_superfund(loc))
@@ -1080,7 +1085,7 @@ class water_violation:
         df = df[['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE', 'counts']].groupby('COUNTY_SERVED', as_index = False).max() 
         self.testing = df
         df['County'] = df.COUNTY_SERVED.astype(str) + ' County'
-        df.County[df.County.str.contains('.*Parish.*')] = df.County[df.County.str.contains('.*Parish.*')].apply(lambda x: x[:-7])
+        df.County[df.County.str.contains('.*Parish.*')] = df.County.copy()[df.County.str.contains('.*Parish.*')].apply(lambda x: x[:-7])
         df.drop(['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE'], axis = 1, inplace  = True)
         df.loc[df.counts.isnull(),'counts'] = 0
         df['State'] = stateDf.loc[stateDf.StateAbbrev.eq(state), "State"].values[0]
@@ -1397,8 +1402,10 @@ class places_data:
         results_df2 = results_df.loc[:, results_df.columns.isin(['countyfips', 'countyname', 'stateabbr', 'cancer_crudeprev', 
                                   'cervical_crudeprev', 'colon_screen_crudeprev',
                                   'csmoking_crudeprev', 'mammouse_crudeprev', 'obesity_crudeprev'])]
-        
-        state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in self.state}
+        if isinstance(self.state, str):
+            state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in [self.state]}
+        else:
+            state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in self.state}
         states_name = results_df2.stateabbr.copy().apply(lambda x: state_abbr_to_name[x]).tolist()
         results_df3 = results_df2.rename(columns={'countyfips': 'FIPS', 'countyname': 'County',  
                                                   'cancer_crudeprev': 'Cancer_Prevalence',
@@ -1411,6 +1418,11 @@ class places_data:
         results_df3 = results_df3[['FIPS','County','State','Cancer_Prevalence', 
                                   'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
                                   'Met_Breast_Screen','BMI_Obese']]
+        results_df3[['Cancer_Prevalence', 
+                                  'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                  'Met_Breast_Screen','BMI_Obese']] = results_df3[['Cancer_Prevalence', 
+                                  'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                  'Met_Breast_Screen','BMI_Obese']].astype(float)
         del results_df, results_df2
         return results_df3
         
@@ -1426,7 +1438,13 @@ class places_data:
                                                                  'stateabbr', 'cancer_crudeprev', 
                                                                  'colon_screen_crudeprev', 'csmoking_crudeprev', 
                                                                  'mammouse_crudeprev', 'obesity_crudeprev'])]
-        results_df3['State'] = states_name
+        
+        if isinstance(self.state, str):
+            state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in [self.state]} #inefficient...
+        else:
+            state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in self.state}
+
+        states_name = results_df2.stateabbr.copy().apply(lambda x: state_abbr_to_name[x]).tolist()
         results_df3 = results_df2.rename(columns={'tractfips': 'FIPS', 'countyfips': 'FIPS5', 
                                                   'countyname': 'County',   
                                                   'cancer_crudeprev': 'Cancer_Prevalence',
@@ -1434,9 +1452,13 @@ class places_data:
                                                   'mammouse_crudeprev': 'Met_Breast_Screen', 
                                                   'csmoking_crudeprev': 'Currently_Smoke',
                                                   'obesity_crudeprev': 'BMI_Obese'})
-        
+        results_df3['State'] = states_name
+
         results_df3 = results_df3[['FIPS','FIPS5','County','State','Cancer_Prevalence', 
                                   'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']]
+        results_df3[['Cancer_Prevalence', 
+                                  'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']] = results_df3[['Cancer_Prevalence', 
+                                  'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']].astype(float)
         del results_df, results_df2
         return results_df3
 
@@ -1473,7 +1495,8 @@ if __name__ == '__main__':
     # where to save the data
     parser.add_argument('--download_dir', required = False, default = None)
     # arguments for acs config
-    parser.add_argument('--state_fips', nargs = '+', type = int, required = True)
+    parser.add_argument('--ca_file_path', help = 'catchment area csv file', required = False, default = None) #uky_ca.csv
+    parser.add_argument('--state_fips', nargs = '+', type = int, required = False, default = None)
     parser.add_argument('--census_api_key', required = True)
     parser.add_argument('--query_level', nargs = '+', required = True, 
                         choices = ['county subdivision','tract','block', 'county', 'state','zip'])
@@ -1483,10 +1506,23 @@ if __name__ == '__main__':
     parser.add_argument('--socrata_password', required = False, default = None)
 
     args = parser.parse_args()
-    if len(args.state_fips) == 1:
-        state_fips = str(args.state_fips[0])
+    
+    if args.ca_file_path:
+        ca = pd.read_csv(args.ca_file_path, dtype={'FIPS':str})
+        state_FIPS = ca.FIPS.apply(lambda x: x[:2]).unique().tolist()
+        if len(state_FIPS) == 1:
+            state_fips = state_FIPS[0]
+        else:
+            state_fips = state_FIPS
+    
+    elif args.state_fips:
+        if len(args.state_fips) == 1:
+            state_fips = str(args.state_fips[0])
+        else:
+            state_fips = [str(x) for x in args.state_fips]
     else:
-        state_fips = [str(x) for x in args.state_fips]
+        raise AttributeError("You must provide either catchment area csv file or list of state fips")
+        
         
     ####### query level can be multiple
    
@@ -1527,7 +1563,10 @@ if __name__ == '__main__':
     #### Step 3: Facility Data
     # facility data
     from utils import stateDf
-    location = stateDf.loc[stateDf.FIPS2.isin(state_fips), 'StateAbbrev'].values.tolist()
+    if isinstance(state_fips, str):
+        location = stateDf.loc[stateDf.FIPS2.eq(state_fips), 'StateAbbrev'].values[0]
+    else:
+        location = stateDf.loc[stateDf.FIPS2.isin(state_fips), 'StateAbbrev'].values.tolist()
     
     sdoh_by_query_level['facility'] = gen_facility_data(location)
     sdoh_by_query_level['facility']['all'] = pd.concat(sdoh_by_query_level['facility'].values(), axis = 0).reset_index(drop = True)
@@ -1573,6 +1612,10 @@ if __name__ == '__main__':
     def urban_rural_func(state_fips = state_fips):
         return urban_rural_counties(state_fips)
     
+    # superfund
+    def superfund_func(state_fips = state_fips):
+        return superfund(state_fips)
+    
     ### Step 4: Other Data    
     # Using joblibs, retrieve and allocation datasets concurrently
     # water violation is the only function that runs concurrently if state_fips is a list of more than one state_fips code
@@ -1581,13 +1624,15 @@ if __name__ == '__main__':
     pbar.set_description("collecting bls, food desert, water violation, urban-rural-counties, and risk-and-screening data")
 
     if isinstance(state_fips, str):
-        functions = [food_desert_func, cdc_risk_and_screening, bls_func, urban_rural_func, water_violation_func]
-        dataset_name = ['food_desert','cdc','bls','urban_rural','water_violation']
+        functions = [food_desert_func, cdc_risk_and_screening, bls_func, urban_rural_func, 
+                     water_violation_func, superfund_func]
+        dataset_name = ['food_desert','cdc','bls','urban_rural','water_violation','superfund']
         res = Parallel(n_jobs = -1)(delayed(f)() for f in functions)
         other_data = {k: v for k,v in zip(dataset_name, res)}
     else:
-        functions = [food_desert_func, cdc_risk_and_screening, bls_func, urban_rural_func]
-        dataset_name = ['food_desert','cdc','bls', 'urban_rural']
+        functions = [food_desert_func, cdc_risk_and_screening, bls_func, 
+                     urban_rural_func, superfund_func]
+        dataset_name = ['food_desert','cdc','bls', 'urban_rural', 'superfund']
         res = Parallel(n_jobs = -1)(delayed(f)() for f in functions)
         other_data = {k: v for k,v in zip(dataset_name, res)}
         other_data['water_violation'] = water_violation_func()
@@ -1610,7 +1655,15 @@ if __name__ == '__main__':
 
     # appending urban_rural
     sdoh_by_query_level['county']['urban_rural'] = other_data['urban_rural']
-        
+    
+    # appending superfund
+    sdoh_by_query_level['facility']['superfund'] = other_data['superfund']
+
+    
+    
+    
+    
+    
     if args.download_dir:
         file_path = os.path.join(args.download_dir, 'cif_raw_data.pickle')
     else:

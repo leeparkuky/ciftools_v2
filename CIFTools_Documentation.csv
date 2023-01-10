@@ -1,0 +1,64 @@
+Data documentation by sheet,
+,
+Broadband Speeds,"Source: Federal Communications Commission, December 2021"
+MaxAdDown,Maximum advertised download speeds in a Census block
+MaxAdUp,Maximum advertised upload speeds in a Census block
+,
+Cancer Incidence & Mortality,"Various Sources and Years; data represents most recent 5 years available on State Cancer Profiles; original sources include National Program of Cancer Registries and Surveillance, Epidemiology and End Results SEER*Stat Database (incidence) and National Vital Statistics System (mortality)"
+AAR,"Age-adjusted Rate; in wide datasets, this is the value associated with cancer site name columns"
+AAC,Average Annual Count; only present in long datasets
+,
+Economy,Various Sources and Years
+Insurance Coverage,"Percent of population with any sort of insurance coverage (American Community Survey, 5-Year Estimates, 2017-2021)"
+Medicaid,"Percent of population enrolled in Medicaid (ACS, 5-Year Estimates, 2017-2021)"
+Gini Coefficient ,"Gini coefficient for a population; the Gini coefficient is a single-value measure of the degree of income inequality for a population (ACS, 5-Year Estimates, 2017-2021)"
+Household Income,"Median household income for a population (ACS, 5-Year Estimates, 2017-2021)"
+Annual Labor Force Participation Rate,"Percent of population 16 or older either working or actively looking for work (ACS, 5-Year Estimates, 2017-2021)"
+Annual Unemployment Rate,"Percent of population 16 or older who are unemployed (averaged over last 12 months) (ACS, 5-Year Estimates, 2017-2021)"
+Uninsured,"Percent of population who does not have any sort of insurance coverage (ACS, 5-Year Estimates, 2017-2021)"
+Monthly Unemployment Rate,"Percent of population 16 or older who are unemployed (BLS, month varies by run date)"
+Medicaid Coverage,"Percent of population enrolled in Medicaid (ACS, 5-Year Estimates, 2017-2021)"
+Below Poverty,"Percent of population who resides in a household whose income falls below the Federal Poverty Line (ACS, 5-Year Estimates, 2017-2021)"
+,
+Environment,Various Sources and Years
+PWS Violations Since 2016,"Number of public water supply health-based violations since 2016 (Environmental Protection Agency, 2022)"
+LILATracts_Vehicle,"Census tract identified as a food desert using vehicle access (or percentage of tracts that are food deserts in a larger geographic area); defined for food desert using vehicle access available at https://www.ers.usda.gov/data-products/food-access-research-atlas/documentation/ (U.S. Department of Agriculture Economic Research Service, 2019)"
+,
+Facilities and Providers,
+Lung Cancer Screening,"Lung cancer screening facilities in Lung Cancer Screening Registry (American College of Radiology, date run)"
+Mammography,"Mammography facilities (Fodd & Drug Administration, date run)"
+Colon & Rectal Surgeon,"Colon & Rectal Surgeons (National Plan & Provider Enumeration System, date run)"
+Gastroenterology,"Gastroenterologists (NPEES, date run)"
+Obstetrics & Gynecology,"Obstetricians and gynecologists (NPEES, date run)"
+HPSA …,"Health Professional Shortage Area facilities (Health Resources and Service Administration, date run)"
+Superfund Sites,"Superfund Sites, On or Deleted from the National Priority List (Environmental Protection Agency, date run)"
+Toxic Release Inventory Facilities,"Facilities reporting to the Toxic Release Inventory with release of OSHA-recognized carcinogens (EPA, 2021)"
+,
+Housing and Transportation,"Source: ACS, 5-Year Estimates, 2017-2021"
+Vacancy Rate,Percent of housing units vacant
+No Vehicle,Percent of households with no working vehicles
+Rent Burden (40% Income),Percent of households spending 40% or more of household income on rent
+,
+Risk Factors and Screening,"Source: CDC Places, 2022 (using CDC BRFSS from noted years)"
+BMI_Obesity,"Model-based estimate for crude prevalence of obesity among adults aged >=18 years, 2020"
+Cancer_Prev,"Model-based estimate for crude prevalence of cancer (excluding skin cancer) among adults aged >=18 years, 2020"
+Currently_Smoke,"Model-based estimate for crude prevalence of current smoking among adults aged >=18 years, 2020"
+Met_Breast_Screen,"Model-based estimate for crude prevalence of mammography use among women aged 50–74 years, 2020"
+Met_Cervical_Screen,"Model-based estimate for crude prevalence of cervical cancer screening among adult women aged 21–65 years, 2020"
+Met_Colon_Screen,"Model-based estimate for crude prevalence of fecal occult blood test, sigmoidoscopy, or colonoscopy among adults aged 50–75 years, 2020"
+,
+Sociodemographic,"Source: ACS, 5-Year Estimates, 2017-2021"
+Total,Total population
+Under 18,Percent of population under 18 years old
+18 to 64,Percent of population between 18 and 64 years old
+Over 64,Percent of population over 64 years old
+Below 9th grade,Percent of population whose highest educational attainment is less than 9th grade
+High School,Percent of population that earned a high school diploma or GED
+College,Percent of population that earned a bachelor's degree
+Advanced Degree,Percent of population that earned a graduate or professional degree
+White,Percent of population identifying as Non-Hispanic White
+Black,Percent of population identifying as Non-Hispanic Black
+Hispanic,Percent of population identifying as Hispanic (any race)
+Asian,Percent of population identifying as Non-Hispanic Asian
+Other Races,Percent of population identifying as any other Non-Hispanic race
+Urban Percentage,Percent of population living in an urban area (as identified by 2010 decennial Census)
