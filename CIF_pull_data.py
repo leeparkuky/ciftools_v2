@@ -1,5 +1,6 @@
 import pickle
 import pandas as pd
+import numpy as np
 from utils import stateDf
 from datetime import datetime as dt
 from functools import partial
@@ -70,7 +71,7 @@ def organize_table(topic_variables, query_level, column_names_dict = None, colum
         df = df.rename(columns = colnames)
     if columns_to_drop:
         df = df.drop(columns = columns_to_drop, axis = 1)
-    return df.convert_dtypes()
+    return df
 
 
 
@@ -248,11 +249,11 @@ if __name__ == '__main__':
 
     
     #### cancer data
-    cancer_inc_l = data_dictionary['cancer']['incidence'].copy().convert_dtypes()
+    cancer_inc_l = data_dictionary['cancer']['incidence'].copy()
     cancer_inc_l = select_area_for_catchment_area(cancer_inc_l, 'county')
     cancer_inc_l = cancer_inc_l[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']]
     cancer_inc = pd.pivot(cancer_inc_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
-    cancer_mor_l = data_dictionary['cancer']['mortality'].copy().convert_dtypes()
+    cancer_mor_l = data_dictionary['cancer']['mortality'].copy()
     cancer_mor_l = select_area_for_catchment_area(cancer_mor_l, 'county')
     cancer_mor_l = cancer_mor_l[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']]
     cancer_mor = pd.pivot(cancer_mor_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()

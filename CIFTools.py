@@ -128,9 +128,7 @@ def acs_data(key, config = None, **kwargs):
                 df_1 = pd.DataFrame(res[1:], columns = res[0])
                 df = df.merge(df_1, how = 'inner', on = df.columns[df.columns.str.isalpha()].tolist())
     df = pd.concat([df.loc[:, df.columns.str.isalpha()], df.loc[:, ~df.columns.str.isalpha()]], axis = 1)
-    output = df.convert_dtypes(convert_string = False, convert_boolean = False)
-    del df
-    return output
+    return df
 
 
 def custom_acs_data(key, config = None, **kwargs):    
@@ -319,7 +317,7 @@ class acs_sdoh:
         @custom_acs_data(self.key, config)
         def transform_df(df):
             df = df.rename(columns = {'B19083_001E': 'Gini Index'})
-            df['Gini Index'] = df['Gini Index'].astype(float).apply(lambda x: x if x>=0 else pd.NA)
+            df['Gini Index'] = df['Gini Index'].astype(float).apply(lambda x: x if x>=0 else np.nan)
             df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
             return df
         self.add_function(transform_df, 'gini_index')
@@ -406,7 +404,7 @@ class acs_sdoh:
         @custom_acs_data(self.key, config)
         def transform_df(df):
             df[f'median_income_{race}'] = df[f'{config.acs_group}_001E'].astype(float)
-            df.loc[df[f'median_income_{race}'].le(0), f'median_income_{race}'] = pd.NA
+            df.loc[df[f'median_income_{race}'].le(0), f'median_income_{race}'] = np.nan
             df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
             return df
         if race == 'all':
@@ -633,7 +631,7 @@ def toxRel_data(location:Union[str, List[str]]):
     df = df[['FACILITY NAME', 'Address', 'LATITUDE', 'LONGITUDE', 'COUNTY', 'Notes']]
     df = df.rename(columns = {'FACILITY NAME': 'Name', 'LATITUDE': 'latitude', 'LONGITUDE': 'longitude'})
     df['Type'] = 'Toxic Release Inventory Facility'
-    df['Phone_number'] = pd.NA
+    df['Phone_number'] = None
     return df[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']]
 
     
@@ -657,7 +655,7 @@ def gen_single_superfund(location: str):
                               'LATITUDE':'latitude', 'LONGITUDE':'longitude'})
     sf3.drop(['SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE'], axis=1, inplace=True)
     sf3['Type'] = 'Superfund Site'
-    sf3['Phone_number'] = pd.NA
+    sf3['Phone_number'] = None
     
     del sf, sf2
     return sf3[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude', 'FIPS5']]
@@ -759,7 +757,7 @@ def hpsa(location: Union[str, List[str]]):
     df = df[['Type','Name','HPSA_ID','Designation_Type','HPSA_Score','Address',
              'FIPS', 'State', 'longitude','latitude']]
     df = df.loc[df.longitude.notnull()|df.Address.notnull()].reset_index(drop = True)
-    df['Phone_number'] = pd.NA
+    df['Phone_number'] = None
     df['Notes'] = ''
     return df[['Type','Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']] #try to add FIPS and State
 
@@ -860,6 +858,9 @@ def parse_address(address):
 
 
 taxonomy = ['Gastroenterology','colon','obstetrics']
+
+taxonomy_names = dict(zip(taxonomy, ['Gastroenterology','Colon & Rectal Surgeon','Obstetrics & Gynecology']))
+
 def gen_nppes_by_taxonomy(taxonomy: str, location: str):
     count = 0
     result_count = 200
@@ -875,7 +876,10 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
         df['Name'] = df.basic.apply(parse_basic)
         df['Phone_number'] = df.addresses.apply(lambda x: parse_address(x)[1])
         df['Address'] = df.addresses.apply(lambda x: parse_address(x)[0])
-        df['Type']    = taxonomy
+        if taxonomy in taxonomy_names.keys():
+            df['Type']    = taxonomy_names[taxonomy]
+        else:
+            df['Type']    = taxonomy
         df['Notes']   = ''
         if result_count == 200:
             datasets.append(df[['Type','Name','Address','Phone_number', 'Notes']])
@@ -1577,6 +1581,16 @@ if __name__ == '__main__':
     ## Append other datasets to sdoh_by_query_level
     ##################################
     
+    # Note: they are either in county or tract level. So we must make sure sdoh_by_query_level have 
+    # county or tract level
+    
+    if 'county' not in sdoh_by_query_level.keys():
+        sdoh_by_query_level['county'] = {}
+    if 'tract' not in sdoh_by_query_level.keys():
+        sdoh_by_query_level['tract']  = {}
+    
+    
+    
     # risk_and_screening
     if args.socrata_user_name:
         kwargs = {"domain": "chronicdata.cdc.gov",
@@ -1659,7 +1673,9 @@ if __name__ == '__main__':
     # appending superfund
     sdoh_by_query_level['facility']['superfund'] = other_data['superfund']
 
-    
+    pbar.update(1)
+    pbar.set_description("data collection is complete")
+
     
     
     
