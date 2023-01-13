@@ -549,23 +549,13 @@ ten_year_age_groups = partial(find_index_for_age_group, age_group_dict = ten_yea
 
 def gen_facility_data(location:Union[List[str], str], taxonomy:List[str] = ['Gastroenterology','colon','obstetrics']):
     data_dict = {}
-    if isinstance(location, str):
-        data_dict['nppes'] = nppes(location)
-        functions = [mammography, hpsa, fqhc, lung_cancer_screening, toxRel_data, superfund]
-        dataset_names = ['mammography', 'hpsa','fqhc','lung_cancer_screening', 'tri_facility', 'superfund_site']
-        datasets = Parallel(n_jobs=-1)(delayed(f)(location) for f in functions)
-        for name, df in zip(dataset_names, datasets):
-            data_dict[name] = df
-        return data_dict
-    else:
-        data_dict['nppes'] = nppes(location)
-        functions = [mammography, hpsa, fqhc, toxRel_data, superfund]
-        dataset_names = ['mammography', 'hpsa','fqhc','tri_facility', 'superfund_site']
-        datasets = Parallel(n_jobs=-1)(delayed(f)(location) for f in functions)
-        for name, df in zip(dataset_names, datasets):
-            data_dict[name] = df
-        data_dict['lung_cancer_screening'] = lung_cancer_screening(location)
-        return data_dict
+    data_dict['nppes'] = nppes(location)
+    functions = [mammography, hpsa, fqhc, lung_cancer_screening, toxRel_data, superfund]
+    dataset_names = ['mammography', 'hpsa','fqhc','lung_cancer_screening', 'tri_facility', 'superfund_site']
+    datasets = Parallel(n_jobs=-1)(delayed(f)(location) for f in functions)
+    for name, df in zip(dataset_names, datasets):
+        data_dict[name] = df
+    return data_dict
 
     
     
@@ -644,9 +634,9 @@ def toxRel_data(location:Union[str, List[str]]):
 
     
 def gen_single_superfund(location: str):
-    assert len(location) == 2
-    url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location.upper()}/CSV'
-    sf = pd.read_csv(url, dtype = {'SITE_FIPS_CODE':str})
+    assert len(location) == 2; assert location.isalpha()
+    url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location}/CSV'
+    sf = pd.read_csv(url, dtype = {'SITE_FIPS_CODE':str, 'SITE_FIPS_CODE':str})
     sf2 = sf.loc[sf.NPL.isin(['Currently on the Final NPL', 'Deleted from the Final NPL'])]
     sf3 = sf2[['SITE_NAME', 'SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE',
              'SITE_FIPS_CODE', 'NPL', 'LATITUDE', 'LONGITUDE']]
@@ -665,13 +655,23 @@ def superfund(location: Union[str, List[str]]):
     if isinstance(location, str):
         if location.isnumeric():
             location = stateDf.loc[stateDf.FIPS2.eq(location),'StateAbbrev'].values[0]
-        df = gen_single_superfund(location)
+        try:
+            df = gen_single_superfund(location)
+        except:
+            print(f'superfund data for {location} is not available')
+            df = None
     else:
         if any([x.isnumeric() for x in location]):
-            location = stateDf.loc[stateDf.FIPS2.isin(location),'StateAbbrev'].values.tolist()
+            for i, loc in enumerate(location):
+                if loc.isnumeric():
+                    location[i] = stateDf.loc[stateDf.FIPS2.eq(loc),'StateAbbrev'].values[0]
         datasets = []
         for loc in location:
-            datasets.append(gen_single_superfund(loc))
+            try:
+                datasets.append(gen_single_superfund(loc))
+            except:
+                print(f"superfund data for {loc} is not available")
+                pass
         df = pd.concat(datasets, axis = 0).reset_index(drop = True)
     return df
     
@@ -885,7 +885,15 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
             df['Type']    = taxonomy
         df['Notes']   = ''
         if result_count == 200:
-            datasets.append(df[['Type','Name','Address','Phone_number', 'Notes']])
+            df = df[['Type','Name','Address','Phone_number', 'Notes']]
+            if count % 7 == 0 :
+                print(location)
+                if (datasets[-1] == df).sum().sum() == 1000:
+                    result = pd.concat(datasets, axis = 0).reset_index(drop = True)
+                    result = result.drop_duplicates()
+                    return result
+            else:
+                datasets.append(df[['Type','Name','Address','Phone_number', 'Notes']])
         elif count == 1:
             return df[['Type','Name','Address','Phone_number', 'Notes']]
         else:
@@ -899,6 +907,7 @@ def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterolog
     else:
         from itertools import product
         res = Parallel(n_jobs=-1)(delayed(gen_nppes_by_taxonomy)(t, loc) for t, loc in product(taxonomy, location))
+        print('Process is complete')
     return pd.concat(res, axis = 0)
 
 ###################################################################
@@ -915,16 +924,13 @@ def setup_chrome_driver():
         fp = glob_result[0]
     return fp
     
-def lung_cancer_screening_file_download(location:str, num_downloads = 1, wait = 0):
+def lung_cancer_screening_file_download(location:str):
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.chrome.service import Service
     from selenium.webdriver.common.by import By
     import os
     import time
-    if wait:
-        time.sleep(wait)
-    
     chromeOptions = Options()
     prefs = {"download.default_directory" : getcwd()}
     chromeOptions.add_experimental_option("prefs",prefs)
@@ -937,9 +943,8 @@ def lung_cancer_screening_file_download(location:str, num_downloads = 1, wait = 
     state = driver.find_elements(By.CLASS_NAME, 'tabComboBoxButtonHolder')[2]; state.click(); time.sleep(10)
     state2 = driver.find_elements(By.CLASS_NAME, 'tabMenuItemNameArea')[1]; state2.click(); time.sleep(10)
     download = driver.find_element(By.ID, 'tabZoneId422'); download.click()
-    x = num_downloads
     t = 0
-    while t < x:
+    while t == 0:
         time.sleep(5)
         t = len(glob('./ACRLCSDownload*.csv'))
         print('Waiting on LCSR data...')
@@ -948,7 +953,7 @@ def lung_cancer_screening_file_download(location:str, num_downloads = 1, wait = 
     driver.close()
     return None
     
-def process_lcs_data(file_path, location):
+def process_lcs_data(file_path, location: Union[str, List[str]]):
     df = pd.read_csv(file_path)
     df.columns = ['Name','Street','City','State','Zip_code','Phone','Designation', 'Site ID', 'Facility ID', 'Registry Participant']
     df['Address'] = df['Street'].str.title() + ', ' + df['City'].str.title() + ', ' +  df['State'].str.upper() + ' ' + df['Zip_code'].apply(lambda x: x[:5])
@@ -969,18 +974,9 @@ def remove_chromedriver(chrome_driver_path):
 
     
 def lung_cancer_screening(location: Union[str, List[str]]):
-    if isinstance(location, str):
-        lung_cancer_screening_file_download(location)
-    else:
-        Parallel(n_jobs=-1)(delayed(lung_cancer_screening_file_download)(loc, len(location), w) for loc, w in zip(location, [x*20 for x in range(len(location))]))
+    lung_cancer_screening_file_download(location)
     downloads = glob('./ACRLCSDownload*.csv')
-    if isinstance(location, list):
-        assert len(downloads) == len(location)
-    if len(downloads) > 1:
-        datasets = Parallel(n_jobs=-1)(delayed(process_lcs_data)(path, location) for path in downloads)
-        df = pd.concat(datasets, axis = 0)
-    else:
-        df = process_lcs_data(downloads[0], location)
+    df = process_lcs_data(downloads[0], location)
     chrome_driver_path = setup_chrome_driver()
     remove_chromedriver(chrome_driver_path)
     df = df.reset_index(drop = True)
