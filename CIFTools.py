@@ -853,7 +853,10 @@ def parse_address(address):
         street = address_dict['address_1'].title() + ', ' + address_dict['address_2'].title() + ', ' + address_dict['city'].title() + ', ' + address_dict['state'].upper() + ' ' + address_dict['postal_code'][:5]
     else:
         street = address_dict['address_1'].title() + ', ' + address_dict['city'].title() + ', ' + address_dict['state'].upper() + ' ' + address_dict['postal_code'][:5]
-    phone_number = address_dict['telephone_number']
+    if 'telephone_number' in address_dict.keys():
+        phone_number = address_dict['telephone_number']
+    else:
+        phone_number = None
     return street, phone_number
 
 

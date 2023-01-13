@@ -207,7 +207,7 @@ if __name__ == '__main__':
     parser.add_argument('--ca_file_path', help = 'catchment area csv file', required = True) #uky_ca.csv
     parser.add_argument('--pickle_data_path', help = 'cif_raw_data.pickle file from CIFTools', required = True) 
     # file type of the output
-    parser.add_argument('--download_file_type', required = True, choices = ['csv','pickle','excel'])
+    parser.add_argument('--download_file_type', required = True, nargs = '+', choices = ['csv','pickle','excel'])
 
     args = parser.parse_args()
     
@@ -217,19 +217,20 @@ if __name__ == '__main__':
 
     if os.path.exists(path2) == False:
         os.makedirs(path2)
+
         
-    
         
         
-    if args.download_file_type == 'pickle':
+        
+    if 'pickle' in args.download_file_type:
         save_name = ca_name.replace(" ", "_") + '_catchment_data_' + dt.today().strftime('%m-%d-%Y') + '.pickle'
         pickle_download_path = os.path.join(path2, save_name)
-    elif args.download_file_type == 'excel':
+    if 'excel' in args.download_file_type:
         save_name = ca_name.replace(" ", "_") + '_catchment_data_' + dt.today().strftime('%m-%d-%Y') + '.xlsx'
         save_name2 = ca_name.replace(" ", "_") + '_catchment_data_long_' + dt.today().strftime('%m-%d-%Y') + '.xlsx'
         full_path = os.path.join(os.getcwd(), ca_dir, save_name)
         full_path2 = os.path.join(os.getcwd(), ca_dir, save_name2)
-    else:
+    if 'csv' in args.download_file_type:
         today = dt.today().strftime('%m-%d-%Y')
 
     #### importing data and ca_file
@@ -337,15 +338,15 @@ if __name__ == '__main__':
                  'facilities_and_providers': point_df}
     
     
-    if args.download_file_type == 'pickle':
+    if 'pickle' in args.download_file_type:
         with open(pickle_download_path, 'wb') as dataset:
             pickle.dump(cdata, dataset, protocol=pickle.HIGHEST_PROTOCOL)
         print(f'dataset is stored at {pickle_download_path}')
         
-    elif args.download_file_type  == 'excel':
+    if 'excel' in args.download_file_type:
         write_excel_file(cdata, full_path, full_path2)
     
-    else:
+    if 'csv' in args.download_file_type:
         save_as_csvs(cdata, path2)
         
     
