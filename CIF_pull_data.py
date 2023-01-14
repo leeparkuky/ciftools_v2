@@ -76,7 +76,9 @@ def organize_table(topic_variables, query_level, column_names_dict = None, colum
 
 
 def write_excel_file(cdata, full_path, full_path2):
-    
+    from pandas import ExcelWriter
+    from datetime import datetime as dt
+
     cdata_keys = ['rf_and_screening_county', 'rf_and_screening_county_long', 
                   'rf_and_screening_tract', 'rf_and_screening_tract_long', 
                   'cancer_incidence', 'cancer_incidence_long', 

@@ -959,9 +959,7 @@ def lung_cancer_screening_file_download(chrome_driver_path = None):
             print('google chrome driver is ready')
         else:
             chrome_driver_path = setup_chrome_driver()
-    print('cp1')
     driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chromeOptions)
-    print('cp2')
     url = 'https://report.acr.org/t/PUBLIC/views/NRDRLCSLocator/LCSLocator?:embed=y&:showVizHome=no&:host_url=https%3A%2F%2Freport.acr.org%2F&:embed_code_version=3&:tabs=no&:toolbar=no&:showAppBanner=no&:display_spinner=no&:loadOrderID=0'
     driver.get(url);  time.sleep(10)
     state = driver.find_elements(By.CLASS_NAME, 'tabComboBoxButtonHolder')[2]; state.click(); time.sleep(10)
