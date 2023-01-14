@@ -13,6 +13,7 @@ from zipfile import ZipFile
 from glob import glob
 from typing import Union, List
 from os import getcwd, remove
+import os
 from csv import DictReader
 from itertools import product
 # for ascync requests
@@ -110,11 +111,16 @@ async def download_all(config, key):
     
     
 def acs_data(key, config = None, **kwargs):
+    import sys
     if config:
         pass
     else:
         config = ACSConfig(**kwargs)
-    result = asyncio.run(download_all(config, key))
+    if sys.platform in ['win32','cygwin']:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+        result = asyncio.get_event_loop().run_until_complete(download_all(config, key)
+    else:                                                     
+        result = asyncio.run(download_all(config, key))
     if len(result) == 1:
         df = pd.DataFrame(result[0][1:], columns = result[0][0])
         data_columns = df.columns[df.columns.str.contains(config.acs_group)].tolist()
@@ -916,10 +922,15 @@ def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterolog
 
         
 def setup_chrome_driver():
-    glob_result = glob("./*/chromedriver", recursive = True)
-    if len(glob_result) == 0:
-        import chromedriver_autoinstaller
-        fp = chromedriver_autoinstaller.install('.')
+    import sys
+    import os
+    if sys.platform in ['win32','cygwin']: # if the platfor is windows
+        glob_result = glob(os.path.join(os.getcwd(), '*', 'chromedriver.exe'))
+    else: # if the platform is either linux or mac os
+        glob_result = glob(os.path.join(os.getcwd(), '*', 'chromedriver'))
+    if len(glob_result) == 0: # if chromedriver is not found
+        import chromedriver_autoinstaller 
+        fp = chromedriver_autoinstaller.install('.') # install chromedriver_autoinstaller
     else:
         fp = glob_result[0]
     return fp
@@ -969,8 +980,13 @@ def process_lcs_data(file_path, location: Union[str, List[str]]):
 
 def remove_chromedriver(chrome_driver_path):
     import shutil
-    from os import path
-    shutil.rmtree(path.join(*chrome_driver_path.split('/')[:-1]))
+    import os
+    import sys
+    directory_path = os.path.dirname(chrome_driver_path)
+    try:
+        shutil.rmtree(directory_path)
+    except:
+        print(f"please remove chrome driver located in {directory_path} manually \n when the process is finished \n\n")
 
     
 def lung_cancer_screening(location: Union[str, List[str]]):
@@ -1230,18 +1246,22 @@ class food_desert:
 @dataclass
 class scp_cancer_data:
     state_fips : Union[str, List[str]] #
+    folder_name : str = 'cancer_data'
         
     @property
     def cancer_data(self):
         if hasattr(self, '_cancer_data'):
             pass
         else:
+            import shutil
+            import os
             data_dict = {}
             data_dict['incidence'] = self.scp_cancer_inc()
             data_dict['mortality'] = self.scp_cancer_mor()
             data_dict['incidence']['AAR'] = self.convert_dtype(data_dict['incidence'].AAR)
             data_dict['mortality']['AAR'] = self.convert_dtype(data_dict['mortality'].AAR)
             self._cancer_data = data_dict
+            shutil.rmtree(os.path.join(os.getcwd(), self.folder_name))
         return self._cancer_data
         
     @staticmethod
@@ -1264,9 +1284,9 @@ class scp_cancer_data:
         
         sitesm = {'066': 'Prostate'}
         
-        gen_single_cancer_inc_all = partial(self.gen_single_cancer_inc, sex = '0')
-        gen_single_cancer_inc_male = partial(self.gen_single_cancer_inc, sex = '1')
-        gen_single_cancer_inc_female = partial(self.gen_single_cancer_inc, sex = '2')
+        gen_single_cancer_inc_all = partial(self.gen_single_cancer_inc, sex = '0', folder_name = self.folder_name)
+        gen_single_cancer_inc_male = partial(self.gen_single_cancer_inc, sex = '1', folder_name = self.folder_name)
+        gen_single_cancer_inc_female = partial(self.gen_single_cancer_inc, sex = '2', folder_name = self.folder_name)
         if isinstance(self.state_fips, str):
             incidence_all = Parallel(n_jobs=-1)(
                 delayed(gen_single_cancer_inc_all)(
@@ -1293,22 +1313,78 @@ class scp_cancer_data:
         
         
     @staticmethod
-    def gen_single_cancer_inc(state:str, cancer_site_id:str, cancer_site:str, sex:int):
+    def gen_single_cancer_inc(state:str, cancer_site_id:str, cancer_site:str, sex:int, folder_name:str):
         assert len(state) == 2
         assert state.isnumeric()
         assert sex in list('012')
         assert len(cancer_site_id) == 3
+        # API get
         path = f'https://www.statecancerprofiles.cancer.gov/incidencerates/index.php?stateFIPS={state}&areatype=county&cancer={cancer_site_id}&race=00&sex={sex}&age=001&stage=999&year=0&type=incd&sortVariableName=rate&sortOrder=desc&output=1'
-        df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,2,8],  names=['County', 'FIPS', 'AAR', 'AAC'],
-                         dtype={'County':str, 'FIPS':str}).dropna()
-        df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
-        df['Site'] = cancer_site
-        df['Type'] = 'Incidence'
-        df['State'] = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
-        df['AAR'] = df.AAR.replace('* ', np.nan).astype(float)
-
-        df = df[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']].sort_values('FIPS')
+        resp = requests.get(path)        
+        resp.raise_for_status()
+        
+        # first we will create "cancer_data" directory and download the csv file
+        if len(glob(folder_name)) == 0: # if we don't yet have 'cancer_data' directory
+            os.mkdir(folder_name)
+        # We then will select row that are relevant
+        flag = False
+        fname = f'{folder_name}/incidence_{state}_{cancer_site_id}_{sex}.csv' # file name will be unique for each query
+        with open(fname, 'w') as f:
+            for row in resp.iter_lines(decode_unicode = True): # go through response
+                if row[:6] == 'County':
+                    flag = True
+                    row = row.replace(', ',',').replace(' ,','')
+                elif flag & (row== ''):
+                    flag = False
+                if flag:
+                    f.write(row)
+                    f.write('\n')
+        # read the file with csv.DictReader
+        reader = DictReader(open(fname, 'r'))
+        # find relevant field name (AAR and AAC)
+        fieldnames = pd.Series(reader.fieldnames)
+        AAR_field_name = fieldnames[fieldnames.str.contains('^Age-Adjusted', flags = re.I)].values[0]
+        AAC_field_name = fieldnames[fieldnames.str.contains('Count$', flags = re.I)].values[0]
+        # Go through reader
+        state_abbr = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+        
+        FIPS = []
+        County = []
+        AAR  = []
+        AAC  = []
+        colname = ['FIPS','County','State','Type','Site','AAR','AAC']
+        for row in reader:
+            if row['FIPS'][:2] == state:
+                FIPS.append(row['FIPS'])
+                County.append(row['County'].rstrip('\(0123456789\)'))
+                try:
+                    row[AAR_field_name] = float(row[AAR_field_name])
+                except:
+                    row[AAR_field_name] = None
+                AAR.append(row[AAR_field_name])
+                try:
+                    row[AAC_field_name] = int(row[AAC_field_name])
+                except:
+                    row[AAC_field_name] = None
+                AAC.append(row[AAC_field_name])
+        State = [state_abbr for _ in range(len(FIPS))]
+        Type = ['Incidence' for _ in range(len(FIPS))]
+        Site = [cancer_site for _ in range(len(FIPS))]
+        df = pd.DataFrame(zip(FIPS, County, State, Type, Site, AAR, AAC), columns = colname)
+        df = df.sort_values('FIPS').reset_index(drop = True)
+        del FIPS, County, State, Type, Site, AAR, AAC, reader, resp
+        remove(fname)
         return df
+#         df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,2,8],  names=['County', 'FIPS', 'AAR', 'AAC'],
+#                          dtype={'County':str, 'FIPS':str}).dropna()
+#         df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
+#         df['Site'] = cancer_site
+#         df['Type'] = 'Incidence'
+#         df['State'] = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+#         df['AAR'] = df.AAR.replace('* ', np.nan).astype(float)
+
+#         df = df[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']].sort_values('FIPS')
+#         return df
         
 
     def scp_cancer_mor(self):
@@ -1321,9 +1397,9 @@ class scp_cancer_data:
         
         sitesm = {'066': 'Prostate'}
         
-        gen_single_cancer_mor_all = partial(self.gen_single_cancer_mor, sex = '0')
-        gen_single_cancer_mor_male = partial(self.gen_single_cancer_mor, sex = '1')
-        gen_single_cancer_mor_female = partial(self.gen_single_cancer_mor, sex = '2')
+        gen_single_cancer_mor_all = partial(self.gen_single_cancer_mor, sex = '0', folder_name = self.folder_name)
+        gen_single_cancer_mor_male = partial(self.gen_single_cancer_mor, sex = '1', folder_name = self.folder_name)
+        gen_single_cancer_mor_female = partial(self.gen_single_cancer_mor, sex = '2', folder_name = self.folder_name)
         if isinstance(self.state_fips, str):
             mortality_all = Parallel(n_jobs=-1)(
                 delayed(gen_single_cancer_mor_all)(
@@ -1349,20 +1425,81 @@ class scp_cancer_data:
 
         
     @staticmethod
-    def gen_single_cancer_mor(state:str, cancer_site_id:str, cancer_site:str, sex:int):
+    def gen_single_cancer_mor(state:str, cancer_site_id:str, cancer_site:str, sex:int, folder_name:str):
         assert len(state) == 2
         assert state.isnumeric()
         assert sex in list('012')
         assert len(cancer_site_id) == 3
         path = f'https://www.statecancerprofiles.cancer.gov/deathrates/index.php?stateFIPS={state}&areatype=county&cancer={cancer_site_id}&race=00&sex={sex}&age=001&year=0&type=death&sortVariableName=rate&sortOrder=desc&output=1'
-        df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,3,9],  names=['County', 'FIPS', 'AAR', 'AAC'],
-                         dtype={'County':str, 'FIPS':str}).dropna()
-        df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
-        df['Site'] = cancer_site
-        df['Type'] = 'Incidence'
-        df['State'] = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
-        df = df[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']].sort_values('FIPS')
+        
+        
+        
+        resp = requests.get(path)        
+        resp.raise_for_status()
+        
+        # first we will create "cancer_data" directory and download the csv file
+        if len(glob(folder_name)) == 0: # if we don't yet have 'cancer_data' directory
+            os.mkdir(folder_name)
+        # We then will select row that are relevant
+        flag = False
+        fname = f'{folder_name}/mortality_{state}_{cancer_site_id}_{sex}.csv' # file name will be unique for each query
+        with open(fname, 'w') as f:
+            for row in resp.iter_lines(decode_unicode = True): # go through response
+                if row[:6] == 'County':
+                    flag = True
+                    row = row.replace(', ',',').replace(' ,','')
+                elif flag & (row== ''):
+                    flag = False
+                if flag:
+                    f.write(row)
+                    f.write('\n')
+        # read the file with csv.DictReader
+        reader = DictReader(open(fname, 'r'))
+        # find relevant field name (AAR and AAC)
+        fieldnames = pd.Series(reader.fieldnames)
+        AAR_field_name = fieldnames[fieldnames.str.contains('^Age-Adjusted', flags = re.I)].values[0]
+        AAC_field_name = fieldnames[fieldnames.str.contains('Count$', flags = re.I)].values[0]
+        # Go through reader
+        state_abbr = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+        
+        FIPS = []
+        County = []
+        AAR  = []
+        AAC  = []
+        colname = ['FIPS','County','State','Type','Site','AAR','AAC']
+        for row in reader:
+            if row['FIPS'][:2] == state:
+                FIPS.append(row['FIPS'])
+                County.append(row['County'].rstrip('\(0123456789\)'))
+                try:
+                    row[AAR_field_name] = float(row[AAR_field_name])
+                except:
+                    row[AAR_field_name] = None
+                AAR.append(row[AAR_field_name])
+                try:
+                    row[AAC_field_name] = int(row[AAC_field_name])
+                except:
+                    row[AAC_field_name] = None
+                AAC.append(row[AAC_field_name])
+        State = [state_abbr for _ in range(len(FIPS))]
+        Type = ['Mortality' for _ in range(len(FIPS))]
+        Site = [cancer_site for _ in range(len(FIPS))]
+        df = pd.DataFrame(zip(FIPS, County, State, Type, Site, AAR, AAC), columns = colname)
+        df = df.sort_values('FIPS').reset_index(drop = True)
+        del FIPS, County, State, Type, Site, AAR, AAC, reader, resp
+        remove(fname)
         return df
+
+        
+        
+#         df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,3,9],  names=['County', 'FIPS', 'AAR', 'AAC'],
+#                          dtype={'County':str, 'FIPS':str}).dropna()
+#         df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
+#         df['Site'] = cancer_site
+#         df['Type'] = 'Incidence'
+#         df['State'] = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+#         df = df[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']].sort_values('FIPS')
+#         return df
 
 ##################################################################
 ## CDC PlACES (county/tract level risk factors and screening data)
