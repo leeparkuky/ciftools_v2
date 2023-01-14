@@ -185,7 +185,6 @@ def save_as_csvs(cdata, path2):
 #     cdata['broadband_speeds'].to_csv(ca_name + '_broadband_speeds_' + today + '.csv', encoding='utf-8', index=False)
     cdata['facilities_and_providers'].to_csv(ca_name + '_facilities_and_providers_' + today + '.csv', encoding='utf-8', index=False)
 
-    print('Success! CSVs created')
 
 
 
