@@ -938,12 +938,12 @@ def setup_chrome_driver():
     
 def lung_cancer_screening_file_download(chrome_driver_path = None):
     from selenium import webdriver
-    from selenium.webdriver import Options
+    from selenium.webdriver import ChromeOptions
     from selenium.webdriver.chrome.service import Service
     from selenium.webdriver.common.by import By
     import os
     import time
-    chromeOptions = Options()
+    chromeOptions =ChromeOptions()
     prefs = {"download.default_directory" : getcwd()}
     chromeOptions.add_experimental_option("prefs",prefs)
     chromeOptions.add_argument(f"download.default_directory={getcwd()}")
