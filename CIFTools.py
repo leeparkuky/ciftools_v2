@@ -1003,7 +1003,7 @@ def remove_chromedriver(chrome_driver_path):
 
     
 def lung_cancer_screening(location: Union[str, List[str]]):
-    lung_cancer_screening_file_download(location)
+    lung_cancer_screening_file_download()
     downloads = glob('./ACRLCSDownload*.csv')
     df = process_lcs_data(downloads[0], location)
     chrome_driver_path = setup_chrome_driver()
