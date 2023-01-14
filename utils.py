@@ -7,6 +7,7 @@ import asyncio
 import re
 from io import StringIO
 import chromedriver_autoinstaller
+import os
 
 
 def write_bash_script(bash_file_name: str, 
