@@ -117,7 +117,8 @@ def acs_data(key, config = None, **kwargs):
     else:
         config = ACSConfig(**kwargs)
     if sys.platform in ['win32','cygwin']:
-        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+#         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy()) # not working 
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         result = asyncio.get_event_loop().run_until_complete(download_all(config, key))
     else:                                                     
         result = asyncio.run(download_all(config, key))
