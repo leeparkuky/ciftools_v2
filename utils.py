@@ -9,6 +9,60 @@ from io import StringIO
 import chromedriver_autoinstaller
 
 
+def write_bash_script(bash_file_name: str, 
+                      catchment_area_name: str, 
+                      ca_file_path: str, 
+                      query_level : Union[str, List[str]], 
+                      acs_year : int,
+                      download_file_type : Union[str, List[str]], 
+                      census_api_key: str, 
+                      cif_data_pull = True):
+    
+    if isinstance(query_level, str):
+        assert query_level in ['county subdivision','tract','block', 'county', 'state','zip']
+        query_level = f'"{query_level}"'
+    else:
+        for level in query_level:
+            assert level in ['county subdivision','tract','block', 'county', 'state','zip']
+        query_level = ' '.join(f'"{x}"' for x in query_level)
+        
+        
+    if isinstance(download_file_type, str):
+        assert download_file_type in ['pickle','excel','csv']
+        download_file_type = f'"{download_file_type}"'
+    else:
+        for file_type in download_file_type:
+            assert file_type in ['pickle','excel','csv']
+        download_file_type = ' '.join(f'"{x}"' for x in download_file_type)
+
+    if bash_file_name[-3:] != '.sh':
+        bash_file_name += '.sh'
+        
+    bash_file_path = os.path.join(os.getcwd(), bash_file_name)
+    with open(bash_file_name, 'w') as f:
+        f.write(f'catchment_area_name="{catchment_area_name}"');
+        f.write('\n')
+        f.write(f'ca_file_path="{ca_file_path}"');
+        f.write('\n')
+        f.write(f'year={acs_year}');
+        f.write('\n')
+        f.write(f'census_api_key="{census_api_key}"');
+        f.write('\n\n\n')
+        f.write('pip install -r requirements.txt');
+        f.write('\n\n\n');
+        f.write('clear');
+        f.write('\n\n\n')
+        f.write(f"python CIFTools.py --ca_file_path $ca_file_path --query_level {query_level} --year $year --census_api_key $census_api_key");
+        f.write('\n\n')
+        if cif_data_pull:
+            f.write(f'python CIF_pull_data.py --ca_name $catchment_area_name --ca_file_path $ca_file_path --pickle_data_path "cif_raw_data.pickle" --download_file_type {download_file_type}')
+            f.write('\n')
+        f.close()
+
+
+
+
+
 def gen_variable_names(year: Union[str, int], 
                        acs_type: Union[str, List[str]], 
                        group_id:Union[str, List[str]] = None) -> List[str]:

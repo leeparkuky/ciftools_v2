@@ -1642,7 +1642,7 @@ if __name__ == '__main__':
     # where to save the data
     parser.add_argument('--download_dir', required = False, default = None)
     # arguments for acs config
-    parser.add_argument('--ca_file_path', help = 'catchment area csv file', required = False, default = None) #uky_ca.csv
+    parser.add_argument('--ca_file_path', help = 'catchment area csv file name', required = False, default = None) #uky_ca.csv
     parser.add_argument('--state_fips', nargs = '+', type = int, required = False, default = None)
     parser.add_argument('--census_api_key', required = True)
     parser.add_argument('--query_level', nargs = '+', required = True, 
@@ -1653,6 +1653,7 @@ if __name__ == '__main__':
     parser.add_argument('--socrata_password', required = False, default = None)
 
     args = parser.parse_args()
+    
     
     if args.ca_file_path:
         ca = pd.read_csv(args.ca_file_path, dtype={'FIPS':str})
