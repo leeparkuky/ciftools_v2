@@ -118,7 +118,7 @@ def acs_data(key, config = None, **kwargs):
         config = ACSConfig(**kwargs)
     if sys.platform in ['win32','cygwin']:
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-        result = asyncio.get_event_loop().run_until_complete(download_all(config, key)
+        result = asyncio.get_event_loop().run_until_complete(download_all(config, key))
     else:                                                     
         result = asyncio.run(download_all(config, key))
     if len(result) == 1:
@@ -1323,12 +1323,14 @@ class scp_cancer_data:
         resp = requests.get(path)        
         resp.raise_for_status()
         
+        folder_dir = os.path.join(os.getcwd(), folder_name)                                                     
         # first we will create "cancer_data" directory and download the csv file
-        if len(glob(folder_name)) == 0: # if we don't yet have 'cancer_data' directory
-            os.mkdir(folder_name)
+        if len(glob(folder_dir)) == 0: # if we don't yet have 'cancer_data' directory
+            os.mkdir(folder_dir)
         # We then will select row that are relevant
         flag = False
-        fname = f'{folder_name}/incidence_{state}_{cancer_site_id}_{sex}.csv' # file name will be unique for each query
+        fname = os.path.join(folder_dir, f'incidence_{state}_{cancer_site_id}_{sex}.csv')
+                                                             # file name will be unique for each query
         with open(fname, 'w') as f:
             for row in resp.iter_lines(decode_unicode = True): # go through response
                 if row[:6] == 'County':
@@ -1438,11 +1440,15 @@ class scp_cancer_data:
         resp.raise_for_status()
         
         # first we will create "cancer_data" directory and download the csv file
-        if len(glob(folder_name)) == 0: # if we don't yet have 'cancer_data' directory
-            os.mkdir(folder_name)
+                                                             
+        folder_dir = os.path.join(os.getcwd(), folder_name)                                                     
+        # first we will create "cancer_data" directory and download the csv file
+        if len(glob(folder_dir)) == 0: # if we don't yet have 'cancer_data' directory
+            os.mkdir(folder_dir)
         # We then will select row that are relevant
         flag = False
-        fname = f'{folder_name}/mortality_{state}_{cancer_site_id}_{sex}.csv' # file name will be unique for each query
+        fname = os.path.join(folder_dir, f'mortality_{state}_{cancer_site_id}_{sex}.csv')
+                                                             # file name will be unique for each query
         with open(fname, 'w') as f:
             for row in resp.iter_lines(decode_unicode = True): # go through response
                 if row[:6] == 'County':
