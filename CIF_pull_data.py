@@ -198,8 +198,13 @@ if __name__ == '__main__':
     import argparse
     from tqdm import tqdm
     from glob import glob
+    import time
     import os
     
+    pbar = tqdm(range(5), desc = "Transforming data to generate files for Cancer InFocus", leave = False)
+    time.sleep(2)
+    pbar.set_description("reading pickle data from CIF_Tool")
+
     
     parser = argparse.ArgumentParser()
     # catchment_area_name
@@ -235,10 +240,20 @@ if __name__ == '__main__':
     if 'csv' in args.download_file_type:
         today = dt.today().strftime('%m-%d-%Y')
 
+        
+        
+        
     #### importing data and ca_file
     data_dictionary = open_pickle_file(args.pickle_data_path)
+    
     ca = open_ca_file(args.ca_file_path)
     
+    
+    
+    # update tqdm
+    pbar.update(1)
+    pbar.set_description("transforming raw datasets")
+
     #### define select_area_for_catchment_area function
     select_area_for_catchment_area = partial(select_area_for_catchment_area_full, ca = ca)
 
@@ -339,16 +354,35 @@ if __name__ == '__main__':
                 'environment_tract': env_tract, 'environment_tract_long': env_tract_l,
                  'facilities_and_providers': point_df}
     
-    
+    pbar.update(1)
+    pbar.set_description("saving datasets")
+
     if 'pickle' in args.download_file_type:
         with open(pickle_download_path, 'wb') as dataset:
             pickle.dump(cdata, dataset, protocol=pickle.HIGHEST_PROTOCOL)
         print(f'dataset is stored at {pickle_download_path}')
+        pbar.update(1)
+        pbar.set_description("pickle file is saved")
+    else:
+        pbar.update(1)
+
         
     if 'excel' in args.download_file_type:
         write_excel_file(cdata, full_path, full_path2)
-    
+        pbar.update(1)
+        pbar.set_description("excel file is saved")
+    else:
+        pbar.update(1)
+
     if 'csv' in args.download_file_type:
         save_as_csvs(cdata, path2)
+        pbar.update(1)
+        pbar.set_description("csv file is saved")
+    else:
+        pbar.update(1)
+        
+    pbar.set_description("check the saved data file(s)")
+
+        
         
     
