@@ -10,6 +10,18 @@ import chromedriver_autoinstaller
 import os
 from glob import glob
 
+def download_zip_files():
+    if os.getenv("COLAB_RELEASE_TAG"):
+        from google.colab import files
+        zip_file = glob('*.zip')
+        if len(zip_file):
+            for file in zip_file:
+                files.download(file)
+        return None
+    else:
+        raise OSError("This function can be run only under google colab environment")
+
+
 def import_custom_ca_file():
     if os.getenv("COLAB_RELEASE_TAG"):
         from google.colab import files
