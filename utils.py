@@ -10,6 +10,14 @@ import chromedriver_autoinstaller
 import os
 
 
+def import_custom_ca_file():
+    assert os.getenv("COLAB_RELEASE_TAG")
+    from google.colab import files
+    files.upload()
+
+
+
+
 def write_bash_script(bash_file_name: str, 
                       catchment_area_name: str, 
                       ca_file_path: str, 
@@ -17,7 +25,12 @@ def write_bash_script(bash_file_name: str,
                       acs_year : int,
                       download_file_type : Union[str, List[str]], 
                       census_api_key: str, 
-                      cif_data_pull = True):
+                      cif_data_pull = True,
+                     generate_zip_file = True):
+    
+    
+    ca_dir = catchment_area_name.replace(" ", "_") + "_catchment_data"
+
     
     if isinstance(query_level, str):
         assert query_level in ['county subdivision','tract','block', 'county', 'state','zip']
@@ -55,10 +68,19 @@ def write_bash_script(bash_file_name: str,
         f.write('\n\n\n')
         f.write(f"python CIFTools.py --ca_file_path $ca_file_path --query_level {query_level} --year $year --census_api_key $census_api_key");
         f.write('\n\n')
+        output = os.path.join(os.getcwd(), 'cif_raw_data.pickle')
         if cif_data_pull:
             f.write(f'python CIF_pull_data.py --ca_name $catchment_area_name --ca_file_path $ca_file_path --pickle_data_path "cif_raw_data.pickle" --download_file_type {download_file_type}')
-            f.write('\n')
+            f.write('\n\n')
+            output = ca_dir
+        if generate_zip_file:
+            ca_dir = args.ca_name.replace(" ", "_") + "_catchment_data"
+            f.write(f'zip -r {ca_dir}.zip {ca_dir}'); f.write('\n\n')
+            f.write('echo "\n\n\n\n\n\n\n\n\n\n\n"'); f.write('\n\n')
+            f.write(f'echo "The ziped file is located at {os.path.join(os.getcwd(), ca_dir)}.zip"')
+            output = ca_dir + '.zip'
         f.close()
+    return output
 
 
 
