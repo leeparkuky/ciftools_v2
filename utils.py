@@ -8,16 +8,35 @@ import re
 from io import StringIO
 import chromedriver_autoinstaller
 import os
+from glob import glob
 
-if os.getenv("COLAB_RELEASE_TAG"):
-    def import_custom_ca_file():
+def import_custom_ca_file():
+    if os.getenv("COLAB_RELEASE_TAG"):
         from google.colab import files
         uploaded = files.upload()
         fpath = os.path.join(os.getcwd(), list(uploaded.keys())[0])
         return fpath
+    else:
+        print('This function is only for the google colab environment')
 
 
+def check_ca_file(ca_file_path):
+    if os.path.split(ca_file_path)[0] == '':
+        if len(ca_file_path.split('.')) == 1:
+            ca_file_path = ca_file_path + '.csv'
+        if len(glob(os.path.join(os.getcwd(), '*', ca_file_path))) == 0:
+            raise ValueError("Please check if your file exists in catchment_area folder or \n upload your own catchment_area file using 'import_custom_ca_file' function from utils package")
+        else:
+            glob_result = glob(os.path.join(os.getcwd(), '*', ca_file_path))
+        return glob_result[0]
 
+    else:
+        glob_result = glob(ca_file_path)
+        if len(glob_result):
+            return glob_result[0]
+            
+        
+        
 def write_bash_script(bash_file_name: str, 
                       catchment_area_name: str, 
                       ca_file_path: str, 
@@ -32,6 +51,10 @@ def write_bash_script(bash_file_name: str,
     
     ca_dir = catchment_area_name.replace(" ", "_") + "_catchment_data"
 
+    
+    ca_file_path = check_ca_file(ca_file_path)
+    
+    
     
     if isinstance(query_level, str):
         assert query_level in ['county subdivision','tract','block', 'county', 'state','zip']
@@ -49,7 +72,7 @@ def write_bash_script(bash_file_name: str,
         for file_type in download_file_type:
             assert file_type in ['pickle','excel','csv']
         download_file_type = ' '.join(f'"{x}"' for x in download_file_type)
-
+    
     if bash_file_name[-3:] != '.sh':
         bash_file_name += '.sh'
         
@@ -75,12 +98,12 @@ def write_bash_script(bash_file_name: str,
             f.write(f'python CIF_pull_data.py --ca_name $catchment_area_name --ca_file_path $ca_file_path --pickle_data_path "cif_raw_data.pickle" --download_file_type {download_file_type}')
             f.write('\n\n')
             output = ca_dir
-        if generate_zip_file:
-            ca_dir = args.ca_name.replace(" ", "_") + "_catchment_data"
-            f.write(f'zip -r {ca_dir}.zip {ca_dir}'); f.write('\n\n')
-            f.write('echo "\n\n\n\n\n\n\n\n\n\n\n"'); f.write('\n\n')
-            f.write(f'echo "The ziped file is located at {os.path.join(os.getcwd(), ca_dir)}.zip"')
-            output = ca_dir + '.zip'
+            if generate_zip_file:
+                ca_dir = args.ca_name.replace(" ", "_") + "_catchment_data"
+                f.write(f'zip -r {ca_dir}.zip {ca_dir}'); f.write('\n\n')
+                f.write('echo "\n\n\n\n\n\n\n\n\n\n\n"'); f.write('\n\n')
+                f.write(f'echo "The ziped file is located at {os.path.join(os.getcwd(), ca_dir)}.zip"')
+                output = ca_dir + '.zip'
         f.close()
     return output
 
