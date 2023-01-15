@@ -200,9 +200,6 @@ if __name__ == '__main__':
     import time
     import os
     
-    pbar = tqdm(range(5), desc = "Transforming data to generate files for Cancer InFocus", leave = False)
-    time.sleep(2)
-    pbar.set_description("reading pickle data from CIF_Tool")
 
     
     parser = argparse.ArgumentParser()
@@ -224,7 +221,10 @@ if __name__ == '__main__':
     if os.path.exists(path2) == False:
         os.makedirs(path2)
 
-        
+    pbar = tqdm(range(5), desc = "Transforming data to generate files for Cancer InFocus", leave = False)
+    time.sleep(2)
+    pbar.set_description("reading pickle data from CIF_Tool")
+
         
         
         
