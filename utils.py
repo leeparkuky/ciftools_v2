@@ -91,11 +91,11 @@ def write_bash_script(bash_file_name: str,
             f.write('\n\n\n');
         f.write('clear');
         f.write('\n\n\n')
-        f.write(f"python CIFTools.py --ca_file_path '$ca_file_path' --query_level {query_level} --year $year --census_api_key $census_api_key");
+        f.write(f"python CIFTools.py --ca_file_path $ca_file_path --query_level {query_level} --year $year --census_api_key $census_api_key");
         f.write('\n\n')
         output = os.path.join(os.getcwd(), 'cif_raw_data.pickle')
         if cif_data_pull:
-            f.write(f'python CIF_pull_data.py --ca_name $catchment_area_name --ca_file_path $ca_file_path --pickle_data_path "cif_raw_data.pickle" --download_file_type {download_file_type}')
+            f.write(f'python CIF_pull_data.py --ca_name "$catchment_area_name" --ca_file_path $ca_file_path --pickle_data_path "cif_raw_data.pickle" --download_file_type {download_file_type}')
             f.write('\n\n')
             output = ca_dir
             if generate_zip_file:
