@@ -91,7 +91,7 @@ def write_bash_script(bash_file_name: str,
             f.write('\n\n\n');
         f.write('clear');
         f.write('\n\n\n')
-        f.write(f"python CIFTools.py --ca_file_path $ca_file_path --query_level {query_level} --year $year --census_api_key $census_api_key");
+        f.write(f"python CIFTools.py --ca_file_path '$ca_file_path' --query_level {query_level} --year $year --census_api_key $census_api_key");
         f.write('\n\n')
         output = os.path.join(os.getcwd(), 'cif_raw_data.pickle')
         if cif_data_pull:
