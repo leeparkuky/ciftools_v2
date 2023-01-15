@@ -9,12 +9,12 @@ from io import StringIO
 import chromedriver_autoinstaller
 import os
 
-
-def import_custom_ca_file():
-    assert os.getenv("COLAB_RELEASE_TAG")
-    from google.colab import files
-    files.upload()
-
+if os.getenv("COLAB_RELEASE_TAG"):
+    def import_custom_ca_file():
+        from google.colab import files
+        uploaded = files.upload()
+        fpath = os.path.join(os.getcwd(), list(uploaded.keys())[0])
+        return fpath
 
 
 
@@ -26,7 +26,8 @@ def write_bash_script(bash_file_name: str,
                       download_file_type : Union[str, List[str]], 
                       census_api_key: str, 
                       cif_data_pull = True,
-                     generate_zip_file = True):
+                     generate_zip_file = True,
+                     install_packages = False):
     
     
     ca_dir = catchment_area_name.replace(" ", "_") + "_catchment_data"
@@ -62,8 +63,9 @@ def write_bash_script(bash_file_name: str,
         f.write('\n')
         f.write(f'census_api_key="{census_api_key}"');
         f.write('\n\n\n')
-        f.write('pip install -r requirements.txt');
-        f.write('\n\n\n');
+        if install_packages:
+            f.write('pip install -r requirements.txt');
+            f.write('\n\n\n');
         f.write('clear');
         f.write('\n\n\n')
         f.write(f"python CIFTools.py --ca_file_path $ca_file_path --query_level {query_level} --year $year --census_api_key $census_api_key");
