@@ -99,7 +99,6 @@ def write_bash_script(bash_file_name: str,
             f.write('\n\n')
             output = ca_dir
             if generate_zip_file:
-                ca_dir = args.ca_name.replace(" ", "_") + "_catchment_data"
                 f.write(f'zip -r {ca_dir}.zip {ca_dir}'); f.write('\n\n')
                 f.write('echo "\n\n\n\n\n\n\n\n\n\n\n"'); f.write('\n\n')
                 f.write(f'echo "The ziped file is located at {os.path.join(os.getcwd(), ca_dir)}.zip"')
