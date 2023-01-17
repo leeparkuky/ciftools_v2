@@ -208,18 +208,19 @@ if __name__ == '__main__':
 
     # arguments for catchment_area_file
     parser.add_argument('--ca_file_path', help = 'catchment area csv file', required = True) #uky_ca.csv
-    parser.add_argument('--pickle_data_path', help = 'cif_raw_data.pickle file from CIFTools', required = True) 
+    parser.add_argument('--pickle_data_path', help = 'The pickle CIF data is named as cif_raw_data.pickle', required = True)
+    # --pickle_data_path 'cif_raw_data.pickle'
     # file type of the output
     parser.add_argument('--download_file_type', required = True, nargs = '+', choices = ['csv','pickle','excel'])
 
     args = parser.parse_args()
     
-    ca_name = args.ca_name
+    ca_name = args.ca_name # args.cs_name will be used to create a folder to store cleaned data in a selected format
     ca_dir = args.ca_name.replace(" ", "_") + "_catchment_data"
     path2 = os.path.join(os.getcwd(), ca_dir)
 
     if os.path.exists(path2) == False:
-        os.makedirs(path2)
+        os.makedirs(path2) # if the folder has not yet been created, we create the folder
 
     pbar = tqdm(range(5), desc = "Transforming data to generate files for Cancer InFocus", leave = False)
     time.sleep(2)
@@ -228,22 +229,22 @@ if __name__ == '__main__':
         
         
         
-    if 'pickle' in args.download_file_type:
+    if 'pickle' in args.download_file_type: # if pickle is the selected file format, we set the dataset name with pickle ext
         save_name = ca_name.replace(" ", "_") + '_catchment_data_' + dt.today().strftime('%m-%d-%Y') + '.pickle'
         pickle_download_path = os.path.join(path2, save_name)
-    if 'excel' in args.download_file_type:
+    if 'excel' in args.download_file_type: # the same goes with excel, but it will create two separate excel files
         save_name = ca_name.replace(" ", "_") + '_catchment_data_' + dt.today().strftime('%m-%d-%Y') + '.xlsx'
         save_name2 = ca_name.replace(" ", "_") + '_catchment_data_long_' + dt.today().strftime('%m-%d-%Y') + '.xlsx'
         full_path = os.path.join(os.getcwd(), ca_dir, save_name)
         full_path2 = os.path.join(os.getcwd(), ca_dir, save_name2)
-    if 'csv' in args.download_file_type:
+    if 'csv' in args.download_file_type: # if csv is chosen, it will create csvs by pandas DataFrame
         today = dt.today().strftime('%m-%d-%Y')
 
         
         
         
     #### importing data and ca_file
-    data_dictionary = open_pickle_file(args.pickle_data_path)
+    data_dictionary = open_pickle_file(args.pickle_data_path) # First provide pickle data created by CIFTools
     
     ca = open_ca_file(args.ca_file_path)
     
