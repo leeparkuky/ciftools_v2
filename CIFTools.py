@@ -31,7 +31,7 @@ from utils import stateDf
 from bs4 import BeautifulSoup
 
 
-
+# Hell World from VIM
 
 
 def batchify_variables(config: ACSConfig):
@@ -976,18 +976,75 @@ def lung_cancer_screening_file_download(chrome_driver_path = None):
     return None
     
 def process_lcs_data(file_path, location: Union[str, List[str]]):
-    df = pd.read_csv(file_path)
-    df.columns = ['Name','Street','City','State','Zip_code','Phone','Designation', 'Site ID', 'Facility ID', 'Registry Participant']
-    df['Address'] = df['Street'].str.title() + ', ' + df['City'].str.title() + ', ' +  df['State'].str.upper() + ' ' + df['Zip_code'].apply(lambda x: x[:5])
+    
+    input_file = DictReader(open(file_path))
+
+    new_names = ['Name','Street','City','State','Zip code','Phone']
+    Address = []; Phone = [];Name = []
+
+    location= ['KY','WV']
+    from itertools import product
+    name_dict = {k: v for k, v in product(new_names,input_file.fieldnames) if re.match(".*" + k + '.*', v, flags = re.I)}
+
+
+    def return_lcs_info(row):
+        address = row[name_dict['Street']].title() + ', ' + \
+        row[name_dict['City']].title() + ', ' + row[name_dict['State']] \
+        + ' ' + row[name_dict['Zip code']][:5]
+
+        phone = row[name_dict['Phone']]
+
+        name = row[name_dict['Name']]
+
+        return address, phone, name
+
+
+
+    for row in input_file:
+        if isinstance(location, str):
+            if row[name_dict['State']] == location:
+                address, phone, name = return_lcs_info(row)
+                Address.append(address); Phone.append(phone); Name.append(name)
+        else:
+            if row[name_dict['State']] in location:
+                address, phone, name = return_lcs_info(row)
+                Address.append(address); Phone.append(phone); Name.append(name)
+    df = pd.DataFrame(zip(Name, Address, Phone), columns = ['Name','Address', 'Phone_number'])
     df['Type'] = 'Lung Cancer Screening'
-    df['Phone_number'] = df['Phone']
     df['Notes'] = ''
-    if isinstance(location, str):
-        df = df.loc[df.State.eq(location)]
-    else:
-        df = df.loc[df.State.isin(location)]
     df = df[['Type','Name', 'Address', 'Phone_number', 'Notes']]
+
     return df
+
+    
+    
+    
+    
+    
+    
+    
+#     df = pd.read_csv(file_path)
+#     df.columns = ['Name','Street','City','State','Zip_code','Phone','Designation', 'Site ID', 'Facility ID', 'Registry Participant']
+#     df['Address'] = df['Street'].str.title() + ', ' + df['City'].str.title() + ', ' +  df['State'].str.upper() + ' ' + df['Zip_code'].apply(lambda x: x[:5])
+#     df['Type'] = 'Lung Cancer Screening'
+#     df['Phone_number'] = df['Phone']
+#     df['Notes'] = ''
+#     if isinstance(location, str):
+#         df = df.loc[df.State.eq(location)]
+#     else:
+#         df = df.loc[df.State.isin(location)]
+#     df = df[['Type','Name', 'Address', 'Phone_number', 'Notes']]
+#     return df
+
+
+
+
+
+
+
+
+
+
 
 def remove_chromedriver(chrome_driver_path):
     import shutil
@@ -1648,6 +1705,8 @@ if __name__ == '__main__':
     import pickle
     import os
     from tqdm import tqdm
+    from utils import check_ca_file    
+
     parser = argparse.ArgumentParser()
     # where to save the data
     parser.add_argument('--download_dir', required = False, default = None)
@@ -1666,7 +1725,8 @@ if __name__ == '__main__':
     
     
     if args.ca_file_path:
-        ca = pd.read_csv(args.ca_file_path, dtype={'FIPS':str})
+        ca_file_path = check_ca_file(args.ca_file_path)
+        ca = pd.read_csv(ca_file_path, dtype={'FIPS':str})
         state_FIPS = ca.FIPS.apply(lambda x: x[:2]).unique().tolist()
         if len(state_FIPS) == 1:
             state_fips = state_FIPS[0]

@@ -1,5 +1,5 @@
-catchment_area_name='appalachian'
-ca_file_path='appalachian_counties2.csv'
+catchment_area_name='Markey'
+ca_file_path='uky_ca'
 download_file_type='pickle' # pickle, excel, or csv
 year=2019
 census_api_key='f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436'
