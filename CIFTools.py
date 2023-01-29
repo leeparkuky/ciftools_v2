@@ -920,7 +920,8 @@ def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterolog
 ###################################################################
 ## lung_cancer_screening ########################################## -> multiprocessing with multiple states
 ###################################################################
-
+    
+    
         
 def setup_chrome_driver():
     import sys
@@ -937,44 +938,68 @@ def setup_chrome_driver():
     return fp
     
 def lung_cancer_screening_file_download(chrome_driver_path = None):
-    from selenium import webdriver
-    from selenium.webdriver import ChromeOptions
-    from selenium.webdriver.chrome.service import Service
-    from selenium.webdriver.common.by import By
-    import os
-    import time
-    chromeOptions =ChromeOptions()
-    prefs = {"download.default_directory" : getcwd()}
-    chromeOptions.add_experimental_option("prefs",prefs)
-    chromeOptions.add_argument(f"download.default_directory={getcwd()}")
-    if chrome_driver_path == None:
-        if os.getenv("COLAB_RELEASE_TAG"):
-            import subprocess
-            subprocess.run(['apt','install','chromium-chromedriver'])
-            chromeOptions.add_argument('--headless')
-            chromeOptions.add_argument('--no-sandbox')
-            chromeOptions.add_argument('--disable-dev-shm-usage')
-            chromeOptions.add_argument("window-size=1200x600")
-            chrome_driver_path = '/usr/lib/chromium-browser/chromedriver'
-            print('google chrome driver is ready')
+    try: # first try requests
+        resp = requests.get('https://report.acr.org/t/PUBLIC/views/NRDRLCSLocator/ACRLCSDownload.csv', stream = True)
+        resp.raise_for_status()
+        total = int(resp.headers.get('content-length', 0))
+        chunk_size = 1024
+        from tqdm import tqdm
+        with open('./ACRLCSDownload.csv', 'wb') as f, tqdm(
+            desc="downloading lcs data file",
+            total=total,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+            leave = True
+        ) as bar:
+            for data in resp.iter_content(chunk_size = chunk_size):
+                size = f.write(data)
+                bar.update(size)
+            f.close()
+#         print('LCSR data ready')
+
+        
+    except:  # if it is not working, I will use the selenium
+        from selenium import webdriver
+        from selenium.webdriver import ChromeOptions
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.common.by import By
+        import os
+        import time
+        chromeOptions =ChromeOptions()
+        prefs = {"download.default_directory" : getcwd()}
+        chromeOptions.add_experimental_option("prefs",prefs)
+        chromeOptions.add_argument(f"download.default_directory={getcwd()}")
+        if chrome_driver_path == None:
+            if os.getenv("COLAB_RELEASE_TAG"):
+                import subprocess
+                subprocess.run(['apt','install','chromium-chromedriver'])
+                chromeOptions.add_argument('--headless')
+                chromeOptions.add_argument('--no-sandbox')
+                chromeOptions.add_argument('--disable-dev-shm-usage')
+                chromeOptions.add_argument("window-size=1200x600")
+                chrome_driver_path = '/usr/lib/chromium-browser/chromedriver'
+                print('google chrome driver is ready')
+            else:
+                chrome_driver_path = setup_chrome_driver()
+        driver = webdriver.Chrome(service=Service(chrome_driver_path), options=chromeOptions)
+    #     old code
+    #     driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chromeOptions)
+        url = 'https://report.acr.org/t/PUBLIC/views/NRDRLCSLocator/LCSLocator?:embed=y&:showVizHome=no&:host_url=https%3A%2F%2Freport.acr.org%2F&:embed_code_version=3&:tabs=no&:toolbar=no&:showAppBanner=no&:display_spinner=no&:loadOrderID=0'
+        driver.get(url);  time.sleep(10)
+        state = driver.find_elements(By.CLASS_NAME, 'tabComboBoxButtonHolder')[2]; state.click(); time.sleep(10)
+        state2 = driver.find_elements(By.CLASS_NAME, 'tabMenuItemNameArea')[1]; state2.click(); time.sleep(10)
+        download = driver.find_element(By.ID, 'tabZoneId422'); download.click()
+        t = 0
+        while t == 0:
+            time.sleep(5)
+            t = len(glob('./ACRLCSDownload*.csv'))
+            print('Waiting on LCSR data...')
         else:
-            chrome_driver_path = setup_chrome_driver()
-    driver = webdriver.Chrome(service=Service(chrome_driver_path), options=chromeOptions)
-#     old code
-#     driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chromeOptions)
-    url = 'https://report.acr.org/t/PUBLIC/views/NRDRLCSLocator/LCSLocator?:embed=y&:showVizHome=no&:host_url=https%3A%2F%2Freport.acr.org%2F&:embed_code_version=3&:tabs=no&:toolbar=no&:showAppBanner=no&:display_spinner=no&:loadOrderID=0'
-    driver.get(url);  time.sleep(10)
-    state = driver.find_elements(By.CLASS_NAME, 'tabComboBoxButtonHolder')[2]; state.click(); time.sleep(10)
-    state2 = driver.find_elements(By.CLASS_NAME, 'tabMenuItemNameArea')[1]; state2.click(); time.sleep(10)
-    download = driver.find_element(By.ID, 'tabZoneId422'); download.click()
-    t = 0
-    while t == 0:
-        time.sleep(5)
-        t = len(glob('./ACRLCSDownload*.csv'))
-        print('Waiting on LCSR data...')
-    else:
-        print('LCSR data ready')
-    driver.close()
+            print('LCSR data ready')
+        driver.close()
+        
+        
     return None
     
 def process_lcs_data(file_path, location: Union[str, List[str]]):
