@@ -1183,7 +1183,7 @@ class water_violation:
         df = df[['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE', 'counts']].groupby('COUNTY_SERVED', as_index = False).max() 
         self.testing = df
         df['County'] = df.COUNTY_SERVED.astype(str) + ' County'
-        df[df.County.str.contains('.*Parish.*'), 'County'] = df.County.copy()[df.County.str.contains('.*Parish.*')].apply(lambda x: x[:-7])
+        df['County']= df.County.str.replace('Parish County','Parish')
         df.drop(['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE'], axis = 1, inplace  = True)
         df.loc[df.counts.isnull(),'counts'] = 0
         df['State'] = stateDf.loc[stateDf.StateAbbrev.eq(state), "State"].values[0]
