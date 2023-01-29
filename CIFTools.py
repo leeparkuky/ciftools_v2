@@ -956,6 +956,7 @@ def lung_cancer_screening_file_download(chrome_driver_path = None):
                 size = f.write(data)
                 bar.update(size)
             f.close()
+        return 0
 #         print('LCSR data ready')
 
         
@@ -998,9 +999,8 @@ def lung_cancer_screening_file_download(chrome_driver_path = None):
         else:
             print('LCSR data ready')
         driver.close()
-        
-        
-    return None
+        return 1
+
     
 def process_lcs_data(file_path, location: Union[str, List[str]]):
     
@@ -1009,7 +1009,6 @@ def process_lcs_data(file_path, location: Union[str, List[str]]):
     new_names = ['Name','Street','City','State','Zip code','Phone']
     Address = []; Phone = [];Name = []
 
-    location= ['KY','WV']
     from itertools import product
     name_dict = {k: v for k, v in product(new_names,input_file.fieldnames) if re.match(".*" + k + '.*', v, flags = re.I)}
 
@@ -1042,14 +1041,6 @@ def process_lcs_data(file_path, location: Union[str, List[str]]):
     df = df[['Type','Name', 'Address', 'Phone_number', 'Notes']]
 
     return df
-
-    
-    
-    
-    
-    
-    
-    
 #     df = pd.read_csv(file_path)
 #     df.columns = ['Name','Street','City','State','Zip_code','Phone','Designation', 'Site ID', 'Facility ID', 'Registry Participant']
 #     df['Address'] = df['Street'].str.title() + ', ' + df['City'].str.title() + ', ' +  df['State'].str.upper() + ' ' + df['Zip_code'].apply(lambda x: x[:5])
@@ -1065,14 +1056,6 @@ def process_lcs_data(file_path, location: Union[str, List[str]]):
 
 
 
-
-
-
-
-
-
-
-
 def remove_chromedriver(chrome_driver_path):
     import shutil
     import os
@@ -1085,11 +1068,12 @@ def remove_chromedriver(chrome_driver_path):
 
     
 def lung_cancer_screening(location: Union[str, List[str]]):
-    lung_cancer_screening_file_download()
+    selenium = lung_cancer_screening_file_download()
     downloads = glob('./ACRLCSDownload*.csv')
     df = process_lcs_data(downloads[0], location)
-    chrome_driver_path = setup_chrome_driver()
-    remove_chromedriver(chrome_driver_path)
+    if selenium:
+        chrome_driver_path = setup_chrome_driver()
+        remove_chromedriver(chrome_driver_path)
     df = df.reset_index(drop = True)
     for file in downloads:
         remove(file)
