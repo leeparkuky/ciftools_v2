@@ -440,8 +440,8 @@ class acs_sdoh:
                     age_group_dict = find_index_for_age_group(age_groups, config = config)
                 except:
                     raise ValueError("Please follow the guideline for the custom age_groups")
-                
-            age_group_dict = large_age_groups(config = config) # you can chage the age group defnition here
+            
+            df['Total'] = df[group_id + "_001E"].astype(int)
             for key, val in age_group_dict.items():
                 col = [x for x in config.variables if config.variables.index(x) in val]
                 df[key] = df.loc[:, col].astype(int).apply(np.sum, axis = 1)
