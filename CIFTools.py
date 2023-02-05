@@ -886,9 +886,12 @@ def parse_basic(basic):
 def parse_address(address):
     address_dict = [x for x in address if x['address_purpose'] == 'LOCATION'][0]
     if 'address_2' in address_dict.keys():
-        street = address_dict['address_1'].title() + ', ' + address_dict['address_2'].title() + ', ' + address_dict['city'].title() + ', ' + address_dict['state'].upper() + ' ' + address_dict['postal_code'][:5]
+        street = address_dict['address_1'].title() + ', ' + address_dict['address_2'].title() + ', ' + address_dict['city'].title() + ', ' + address_dict['state'].upper() 
     else:
-        street = address_dict['address_1'].title() + ', ' + address_dict['city'].title() + ', ' + address_dict['state'].upper() + ' ' + address_dict['postal_code'][:5]
+        street = address_dict['address_1'].title() + ', ' + address_dict['city'].title() + ', ' + address_dict['state'].upper()
+    if 'postal_code' in address_dict.keys():
+        street += ' '
+        street += address_dict['postal_code'][:5]
     if 'telephone_number' in address_dict.keys():
         phone_number = address_dict['telephone_number']
     else:
@@ -917,11 +920,12 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
         df['Phone_number'] = df.addresses.apply(lambda x: parse_address(x)[1])
         df['Address'] = df.addresses.apply(lambda x: parse_address(x)[0])
         df['State'] = df.addresses.apply(lambda x: parse_address(x)[2])
+        df = df.loc[df.State.eq(location), :].reset_index(drop = True)
         if taxonomy in taxonomy_names.keys():
             df['Type']    = taxonomy_names[taxonomy]
         else:
             df['Type']    = taxonomy
-        df['Notes']   = ''
+        df['Notes']   = ['' if x[-5:].isnumeric() else 'missing zip code' for x in df.Address] # MA has one missing zip code
         if result_count == 200:
             df = df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
             if count % 7 == 0 :
