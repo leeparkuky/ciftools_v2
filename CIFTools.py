@@ -1493,40 +1493,44 @@ class scp_cancer_data:
                     f.write('\n')
         # read the file with csv.DictReader
         reader = DictReader(open(fname, 'r'))
-        # find relevant field name (AAR and AAC)
-        fieldnames = pd.Series(reader.fieldnames)
-        AAR_field_name = fieldnames[fieldnames.str.contains('^Age-Adjusted', flags = re.I)].values[0]
-        AAC_field_name = fieldnames[fieldnames.str.contains('Count$', flags = re.I)].values[0]
-        # Go through reader
-        state_abbr = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
-        
-        FIPS = []
-        County = []
-        AAR  = []
-        AAC  = []
-        colname = ['FIPS','County','State','Type','Site','AAR','AAC']
-        for row in reader:
-            if row['FIPS'][:2] == state:
-                FIPS.append(row['FIPS'])
-                County.append(row['County'].rstrip('\(0123456789\)'))
-                try:
-                    row[AAR_field_name] = float(row[AAR_field_name])
-                except:
-                    row[AAR_field_name] = None
-                AAR.append(row[AAR_field_name])
-                try:
-                    row[AAC_field_name] = int(row[AAC_field_name])
-                except:
-                    row[AAC_field_name] = None
-                AAC.append(row[AAC_field_name])
-        State = [state_abbr for _ in range(len(FIPS))]
-        Type = ['Incidence' for _ in range(len(FIPS))]
-        Site = [cancer_site for _ in range(len(FIPS))]
-        df = pd.DataFrame(zip(FIPS, County, State, Type, Site, AAR, AAC), columns = colname)
-        df = df.sort_values('FIPS').reset_index(drop = True)
-        del FIPS, County, State, Type, Site, AAR, AAC, reader, resp
-        remove(fname)
-        return df
+        if reader.fieldnames:
+            # find relevant field name (AAR and AAC)
+            fieldnames = pd.Series(reader.fieldnames)
+            AAR_field_name = fieldnames[fieldnames.str.contains('^Age-Adjusted', flags = re.I)].values[0]
+            AAC_field_name = fieldnames[fieldnames.str.contains('Count$', flags = re.I)].values[0]
+            # Go through reader
+            state_abbr = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
+
+            FIPS = []
+            County = []
+            AAR  = []
+            AAC  = []
+            colname = ['FIPS','County','State','Type','Site','AAR','AAC']
+            for row in reader:
+                if row['FIPS'][:2] == state:
+                    FIPS.append(row['FIPS'])
+                    County.append(row['County'].rstrip('\(0123456789\)'))
+                    try:
+                        row[AAR_field_name] = float(row[AAR_field_name])
+                    except:
+                        row[AAR_field_name] = None
+                    AAR.append(row[AAR_field_name])
+                    try:
+                        row[AAC_field_name] = int(row[AAC_field_name])
+                    except:
+                        row[AAC_field_name] = None
+                    AAC.append(row[AAC_field_name])
+            State = [state_abbr for _ in range(len(FIPS))]
+            Type = ['Incidence' for _ in range(len(FIPS))]
+            Site = [cancer_site for _ in range(len(FIPS))]
+            df = pd.DataFrame(zip(FIPS, County, State, Type, Site, AAR, AAC), columns = colname)
+            df = df.sort_values('FIPS').reset_index(drop = True)
+            del FIPS, County, State, Type, Site, AAR, AAC, reader, resp
+            remove(fname)
+            return df
+        else:
+            return pd.DataFrame(None, columns = ['FIPS','County','State','Type','Site','AAR','AAC'])
+            
 #         df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,2,8],  names=['County', 'FIPS', 'AAR', 'AAC'],
 #                          dtype={'County':str, 'FIPS':str}).dropna()
 #         df['County'] = df['County'].map(lambda x: x.rstrip('\(0123456789\)'))
@@ -1614,42 +1618,44 @@ class scp_cancer_data:
                     f.write('\n')
         # read the file with csv.DictReader
         reader = DictReader(open(fname, 'r'))
-        # find relevant field name (AAR and AAC)
-        fieldnames = pd.Series(reader.fieldnames)
-        AAR_field_name = fieldnames[fieldnames.str.contains('^Age-Adjusted', flags = re.I)].values[0]
-        AAC_field_name = fieldnames[fieldnames.str.contains('Count$', flags = re.I)].values[0]
-        # Go through reader
-        state_abbr = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
-        
-        FIPS = []
-        County = []
-        AAR  = []
-        AAC  = []
-        colname = ['FIPS','County','State','Type','Site','AAR','AAC']
-        for row in reader:
-            if row['FIPS'][:2] == state:
-                FIPS.append(row['FIPS'])
-                County.append(row['County'].rstrip('\(0123456789\)'))
-                try:
-                    row[AAR_field_name] = float(row[AAR_field_name])
-                except:
-                    row[AAR_field_name] = None
-                AAR.append(row[AAR_field_name])
-                try:
-                    row[AAC_field_name] = int(row[AAC_field_name])
-                except:
-                    row[AAC_field_name] = None
-                AAC.append(row[AAC_field_name])
-        State = [state_abbr for _ in range(len(FIPS))]
-        Type = ['Mortality' for _ in range(len(FIPS))]
-        Site = [cancer_site for _ in range(len(FIPS))]
-        df = pd.DataFrame(zip(FIPS, County, State, Type, Site, AAR, AAC), columns = colname)
-        df = df.sort_values('FIPS').reset_index(drop = True)
-        del FIPS, County, State, Type, Site, AAR, AAC, reader, resp
-        remove(fname)
-        return df
+        if reader.fieldnames:
+            # find relevant field name (AAR and AAC)
+            fieldnames = pd.Series(reader.fieldnames)
+            AAR_field_name = fieldnames[fieldnames.str.contains('^Age-Adjusted', flags = re.I)].values[0]
+            AAC_field_name = fieldnames[fieldnames.str.contains('Count$', flags = re.I)].values[0]
+            # Go through reader
+            state_abbr = stateDf.loc[stateDf.FIPS2.eq(state), 'State'].values[0]
 
-        
+            FIPS = []
+            County = []
+            AAR  = []
+            AAC  = []
+            colname = ['FIPS','County','State','Type','Site','AAR','AAC']
+            for row in reader:
+                if row['FIPS'][:2] == state:
+                    FIPS.append(row['FIPS'])
+                    County.append(row['County'].rstrip('\(0123456789\)'))
+                    try:
+                        row[AAR_field_name] = float(row[AAR_field_name])
+                    except:
+                        row[AAR_field_name] = None
+                    AAR.append(row[AAR_field_name])
+                    try:
+                        row[AAC_field_name] = int(row[AAC_field_name])
+                    except:
+                        row[AAC_field_name] = None
+                    AAC.append(row[AAC_field_name])
+            State = [state_abbr for _ in range(len(FIPS))]
+            Type = ['Mortality' for _ in range(len(FIPS))]
+            Site = [cancer_site for _ in range(len(FIPS))]
+            df = pd.DataFrame(zip(FIPS, County, State, Type, Site, AAR, AAC), columns = colname)
+            df = df.sort_values('FIPS').reset_index(drop = True)
+            del FIPS, County, State, Type, Site, AAR, AAC, reader, resp
+            remove(fname)
+            return df
+
+        else:
+            return pd.DataFrame(None, columns = ['FIPS','County','State','Type','Site','AAR','AAC'])
         
 #         df = pd.read_csv(path, skiprows=11, header=None, usecols=[0,1,3,9],  names=['County', 'FIPS', 'AAR', 'AAC'],
 #                          dtype={'County':str, 'FIPS':str}).dropna()
