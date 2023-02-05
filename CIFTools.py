@@ -572,8 +572,17 @@ def gen_facility_data(location:Union[List[str], str], taxonomy:List[str] = ['Gas
     
 def toxRel_data(location:Union[str, List[str]]):
     from tqdm import tqdm
+    import datetime
     import os
-    resp = requests.get('https://data.epa.gov/efservice/downloads/tri/mv_tri_basic_download/2021_US/csv', stream=True)
+    today = datetime.date.today(); year = today.year
+    flag = True
+    while flag: # this while statement will look for the most recent tri data
+        resp = requests.get(f'https://data.epa.gov/efservice/downloads/tri/mv_tri_basic_download/{year}_US/csv', stream=True)
+        try:
+            resp.raise_for_status()
+            flag = False
+        except:
+            year -= 1
     total = int(resp.headers.get('content-length', 0))
     fname = os.path.join(getcwd(), 'toxRel.csv')
     chunk_size = int(1024*1024/2)
@@ -593,17 +602,27 @@ def toxRel_data(location:Union[str, List[str]]):
         reader = DictReader(csvfile)
         ############
         colnames = ['FRS ID', 'FACILITY NAME',    #   'STREET ADDRESS','CITY','ST','ZIP',
-                    'LATITUDE', 'LONGITUDE', 'COUNTY', 'CHEMICAL']
-        csv_keys = ['3. FRS ID', '4. FACILITY NAME', #. '5. STREET ADDRESS', '6. CITY', '8. ST', '9. ZIP',
-                   '12. LATITUDE', '13. LONGITUDE', '7. COUNTY', '34. CHEMICAL']
+                    'LATITUDE', 'LONGITUDE', 'COUNTY', 'CHEMICAL', 'ST']
+        csv_keys = [field for col, field in product(colnames, reader.fieldnames) if \
+                       re.match("\d+\.\s" + col + "$", field, flags = re.I) ]
+
+        temp_col = ['STREET ADDRESS','CITY','ST', 'ZIP', 'CARCINOGEN']
+        temp_field = [field for col, field in product(temp_col, reader.fieldnames) if \
+                       re.match("\d+\.\s" + col + "$", field, flags = re.I) ]
+
+        temp = dict(zip(temp_col, temp_field))
+
+
+    #         csv_keys = ['3. FRS ID', '4. FACILITY NAME', #. '5. STREET ADDRESS', '6. CITY', '8. ST', '9. ZIP',
+    #                    '12. LATITUDE', '13. LONGITUDE', '7. COUNTY', '34. CHEMICAL', '8. ST']
         data_dict = dict(zip(colnames, [[] for _ in range(len(colnames))]))
         data_dict['Address'] = []
         if isinstance(location, str):
             assert len(location) == 2
             for row in reader:
-                if (row['8. ST'] == location.upper()) & (
-                    row['43. CARCINOGEN'] == 'YES'):
-                    address = row['5. STREET ADDRESS'].title() + ', ' + row['6. CITY'].title() + ', ' + row['8. ST'].upper() + ' ' + str(row['9. ZIP'])
+                if (row[temp['ST']] == location.upper()) & (
+                    row[temp['CARCINOGEN']] == 'YES'):
+                    address = row[temp['STREET ADDRESS']].title() + ', ' + row[temp['CITY']].title() + ', ' + row[temp['ST']].upper() + ' ' + str(row[temp['ZIP']])
                     data_dict['Address'].append(address)
                     for dict_key, row_key in zip(colnames, csv_keys):
                         data_dict[dict_key].append(row[row_key]) 
@@ -611,9 +630,9 @@ def toxRel_data(location:Union[str, List[str]]):
             for loc in location:
                 assert len(loc) == 2
             for row in reader:
-                if (row['8. ST'] in [x.upper() for x in location]) & (
-                    row['43. CARCINOGEN'] == 'YES'):
-                    address = row['5. STREET ADDRESS'].title() + ', ' + row['6. CITY'].title() + ', ' + row['8. ST'].upper() + ' ' + str(row['9. ZIP'])
+                if (row[temp['ST']] in [x.upper() for x in location]) & (
+                row[temp['CARCINOGEN']] == 'YES'):
+                    address = row[temp['STREET ADDRESS']].title() + ', ' + row[temp['CITY']].title() + ', ' + row[temp['ST']].upper() + ' ' + str(row[temp['ZIP']])
                     data_dict['Address'].append(address)
                     for dict_key, row_key in zip(colnames, csv_keys):
                         data_dict[dict_key].append(row[row_key])  
@@ -623,13 +642,14 @@ def toxRel_data(location:Union[str, List[str]]):
     del data_dict
     df = df.groupby(["FRS ID", 'FACILITY NAME', 
                                  'Address', 'LATITUDE', 
-                                 'LONGITUDE', 'COUNTY'])['CHEMICAL'].agg(lambda col: ', '.join(col)).reset_index()
+                                 'LONGITUDE', 'COUNTY', 'ST'])['CHEMICAL'].agg(lambda col: ', '.join(col)).reset_index()
     df['Notes'] = 'Chemicals relased: ' + df['CHEMICAL']
-    df = df[['FACILITY NAME', 'Address', 'LATITUDE', 'LONGITUDE', 'COUNTY', 'Notes']]
-    df = df.rename(columns = {'FACILITY NAME': 'Name', 'LATITUDE': 'latitude', 'LONGITUDE': 'longitude'})
+    df = df[['FACILITY NAME', 'Address', 'LATITUDE', 'LONGITUDE', 'COUNTY', 'ST', 'Notes']]
+    df = df.rename(columns = {'FACILITY NAME': 'Name', 'LATITUDE': 'latitude', 'LONGITUDE': 'longitude',
+                             'ST':'State'})
     df['Type'] = 'Toxic Release Inventory Facility'
     df['Phone_number'] = None
-    return df[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']]
+    return df[['Type', 'Name', 'Address', 'State', 'Phone_number', 'Notes', 'latitude', 'longitude']] # You can add FIPS5 if you find COUNTY from a county-> fipscode map
 
     
     
@@ -648,14 +668,15 @@ def gen_single_superfund(location: str):
     sf3 = sf2[['SITE_NAME', 'SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE',
              'SITE_FIPS_CODE', 'NPL', 'LATITUDE', 'LONGITUDE']]
     sf3 = sf3.assign(Address = sf3['SITE_STRT_ADRS1'] + ', ' + sf3['SITE_CITY_NAME'] + ', ' + sf3['SITE_STATE'] + ' ' + sf3['SITE_ZIP_CODE'].astype(str))
-    sf3 = sf3.rename(columns = {'SITE_NAME':'Name', 'SITE_FIPS_CODE':'FIPS5', 'NPL':'Notes',
-                              'LATITUDE':'latitude', 'LONGITUDE':'longitude'})
-    sf3.drop(['SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE'], axis=1, inplace=True)
+    sf3 = sf3.rename(columns = {'SITE_NAME':'Name', 'SITE_FIPS_CODE':'FIPS', 'NPL':'Notes',
+                              'LATITUDE':'latitude', 'LONGITUDE':'longitude',
+                               'SITE_STATE':'State'})
+    sf3.drop(['SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_ZIP_CODE'], axis=1, inplace=True)
     sf3['Type'] = 'Superfund Site'
     sf3['Phone_number'] = None
     
     del sf, sf2
-    return sf3[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude', 'FIPS5']]
+    return sf3[['Type', 'Name', 'Address', 'State', 'Phone_number', 'Notes', 'latitude', 'longitude', 'FIPS']]
 
 
 def superfund(location: Union[str, List[str]]):
@@ -706,7 +727,15 @@ def mammography(location: Union[str, List[str]]):
         df['Address'] = df['Street'] + ', ' + df['City'] + ', ' +  df['State'] + ' ' + df['Zip_code']
         df['Type'] = 'Mammography'
         df['Notes'] = ''
-    return df.loc[:,['Type','Name','Address','Phone_number', 'Notes']] #try to add FIPS and State
+        def convert_phone_number(match_obj):
+            first =  '(' + match_obj.group(1)[:3] + ") " + match_obj.group(1)[3:]
+            if len(match_obj.group(2)) > 4:
+                second = match_obj.group(2)[:4] + " ext. " + match_obj.group(2)[4:]
+            else:
+                second = match_obj.group(2)
+            return first + '-' + second
+        df['Phone_number'] = df.Phone_number.str.replace("(\d+)-(\d+)", convert_phone_number, regex =True)
+    return df.loc[:,['Type','Name','Address','State', 'Phone_number', 'Notes']] #try to add FIPS and State
 
 
 ###################################################################
@@ -766,7 +795,7 @@ def hpsa(location: Union[str, List[str]]):
     df = df.loc[df.longitude.notnull()|df.Address.notnull()].reset_index(drop = True)
     df['Phone_number'] = None
     df['Notes'] = ''
-    return df[['Type','Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']] #try to add FIPS and State
+    return df[['Type','Name', 'Address', 'State', 'Phone_number', 'Notes', 'latitude', 'longitude']] #try to add FIPS 
 
 
 ###################################################################
@@ -828,12 +857,12 @@ def fqhc(location: Union[str, List[str]]):
     df['Address'] = df['Site_Address'] + ', ' + df['Site_City'] + ', ' + \
                     df['Site_State_Abbreviation'] + ' ' + df['Site_Postal_Code']
     df = df.rename(columns = {'Site_Name':'Name', 'Site_Telephone_Number': 'Phone_number', 
-                              'State_Abbreviation': 'State',
+                              'Site_State_Abbreviation': 'State',
                               'Health_Center_Service_Delivery_Site_Location_Setting_Description': 'Notes',
                               'Geocoding_Artifact_Address_Primary_X_Coordinate': 'longitude',
                               'Geocoding_Artifact_Address_Primary_Y_Coordinate': 'latitude'})
     df = df.loc[df.Address.notnull()].reset_index(drop = True)
-    return df[['Type', 'Name', 'Address', 'Phone_number', 'Notes', 'latitude', 'longitude']]
+    return df[['Type', 'Name', 'Address', 'State','Phone_number', 'Notes', 'latitude', 'longitude']]
 
 
 ###################################################################
@@ -864,7 +893,8 @@ def parse_address(address):
         phone_number = address_dict['telephone_number']
     else:
         phone_number = None
-    return street, phone_number
+    state = address_dict['state']
+    return street, phone_number, state
 
 
 taxonomy = ['Gastroenterology','colon','obstetrics']
@@ -886,13 +916,14 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
         df['Name'] = df.basic.apply(parse_basic)
         df['Phone_number'] = df.addresses.apply(lambda x: parse_address(x)[1])
         df['Address'] = df.addresses.apply(lambda x: parse_address(x)[0])
+        df['State'] = df.addresses.apply(lambda x: parse_address(x)[2])
         if taxonomy in taxonomy_names.keys():
             df['Type']    = taxonomy_names[taxonomy]
         else:
             df['Type']    = taxonomy
         df['Notes']   = ''
         if result_count == 200:
-            df = df[['Type','Name','Address','Phone_number', 'Notes']]
+            df = df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
             if count % 7 == 0 :
                 print(location)
                 if (datasets[-1] == df).sum().sum() == 1000:
@@ -900,11 +931,11 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
                     result = result.drop_duplicates()
                     return result
             else:
-                datasets.append(df[['Type','Name','Address','Phone_number', 'Notes']])
+                datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
         elif count == 1:
-            return df[['Type','Name','Address','Phone_number', 'Notes']]
+            return df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
         else:
-            datasets.append(df[['Type','Name','Address','Phone_number', 'Notes']])
+            datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
             result = pd.concat(datasets, axis = 0).reset_index(drop = True)
             return result
         
@@ -1007,9 +1038,8 @@ def process_lcs_data(file_path, location: Union[str, List[str]]):
     input_file = DictReader(open(file_path))
 
     new_names = ['Name','Street','City','State','Zip code','Phone']
-    Address = []; Phone = [];Name = []
+    Address = []; Phone = [];Name = []; State = []
 
-    from itertools import product
     name_dict = {k: v for k, v in product(new_names,input_file.fieldnames) if re.match(".*" + k + '.*', v, flags = re.I)}
 
 
@@ -1021,24 +1051,25 @@ def process_lcs_data(file_path, location: Union[str, List[str]]):
         phone = row[name_dict['Phone']]
 
         name = row[name_dict['Name']]
-
-        return address, phone, name
+        
+        state = row[name_dict['State']]
+        return address, phone, name, state
 
 
 
     for row in input_file:
         if isinstance(location, str):
             if row[name_dict['State']] == location:
-                address, phone, name = return_lcs_info(row)
-                Address.append(address); Phone.append(phone); Name.append(name)
+                address, phone, name, state  = return_lcs_info(row)
+                Address.append(address); Phone.append(phone); Name.append(name); State.append(state)
         else:
             if row[name_dict['State']] in location:
-                address, phone, name = return_lcs_info(row)
-                Address.append(address); Phone.append(phone); Name.append(name)
-    df = pd.DataFrame(zip(Name, Address, Phone), columns = ['Name','Address', 'Phone_number'])
+                address, phone, name, state = return_lcs_info(row)
+                Address.append(address); Phone.append(phone); Name.append(name); State.append(state)
+    df = pd.DataFrame(zip(Name, Address, State, Phone), columns = ['Name','Address', 'State', 'Phone_number'])
     df['Type'] = 'Lung Cancer Screening'
     df['Notes'] = ''
-    df = df[['Type','Name', 'Address', 'Phone_number', 'Notes']]
+    df = df[['Type','Name', 'Address', 'State', 'Phone_number', 'Notes']]
 
     return df
 #     df = pd.read_csv(file_path)
@@ -1125,6 +1156,43 @@ class BLS:
             self._bls_data = df
         return self._bls_data
         
+    @property
+    def bls_data_timeseries(self):
+        if hasattr(self, '_bls_data_timeseries'):
+            pass
+        else:
+            state = self.state_fips
+            response = requests.get('https://www.bls.gov/web/metro/laucntycur14.txt')
+            df = pd.DataFrame([x.strip().split('|') for x in response.text.split('\n')[6:-7]],
+                              columns = ['LAUS Area Code','State','County','Area',
+                                         'Period','Civilian Labor Force','Employed',
+                                         'Unemployed','Unemployment Rate'] )
+            df['State'] = df.State.str.strip().astype(str)
+            if isinstance(state, str):
+                assert len(state) == 2
+                df = df.loc[df.State.eq(state), :]
+            else:
+                for s in state:
+                    assert len(s) == 2
+                df = df.loc[df.State.isin(state), :]
+            df['County'] = df.County.str.strip().astype(str)
+            df['County'] = ['0'+x if len(x) < 3 else x for x in df.County]
+            df['County'] = ['0'+x if len(x) < 3 else x for x in df.County]
+            df['Employed'] = pd.to_numeric(df.Employed.str.strip().str.replace(',',''), errors = 'coerce')
+            df['Unemployed'] = pd.to_numeric(df.Unemployed.str.strip().str.replace(',',''), errors = 'coerce')
+            df['Unemployment Rate'] = pd.to_numeric(df['Unemployment Rate'].str.strip().str.replace(',',''), errors = 'coerce')
+            df['Civilian Labor Force'] = pd.to_numeric(df['Civilian Labor Force'].str.strip().str.replace(',',''), errors = 'coerce')
+
+            df['FIPS'] = df['State']+df['County']
+            df['Period'] = df.Period.str.strip()
+            df['Period'] = df.Period.str.replace('\(p\)','', regex = True)
+            df.Period = df.Period.apply(lambda x:  x[:-2] + '20' + x[-2:])
+            df['period_for_ordering'] = [pd.Period(x) for x in df.Period]
+            df = df.sort_values(['FIPS', 'period_for_ordering']).loc[:,['FIPS','Civilian Labor Force', 'Unemployment Rate', 'Period']].reset_index(drop = True)
+            df = df.rename(columns = {'Unemployment Rate':'Monthly Unemployment Rate'})
+            df['Monthly Unemployment Rate'] = df['Monthly Unemployment Rate'] * .01
+            self._bls_data_timeseries = df
+        return self._bls_data_timeseries
 
         
 ############################################################################
@@ -1386,7 +1454,10 @@ class scp_cancer_data:
             incidence_male = Parallel(n_jobs=-1)(
                 delayed(gen_single_cancer_inc_male)(
                     state, site[0], site[1]) for state, site in product(self.state_fips,sitesm.items()))
-        df = pd.concat(incidence_all + incidence_female + incidence_male, axis = 0).reset_index(drop = True)
+        df = pd.concat(incidence_all + incidence_female + incidence_male, axis = 0).sort_values(['FIPS','Site']).reset_index(drop = True)
+        if df.FIPS.eq('51917').sum(): # if we find 51917 in FIPS
+            vaFix = {'51917': '51019', 'Bedford City and County' : 'Bedford County'}
+            df = df.replace(vaFix)
         return df
 
         
@@ -1501,7 +1572,10 @@ class scp_cancer_data:
             mortality_male = Parallel(n_jobs=-1)(
                 delayed(gen_single_cancer_mor_male)(
                     state, site[0], site[1]) for state, site in product(self.state_fips,sitesm.items()))
-        df = pd.concat(mortality_all + mortality_female + mortality_male, axis = 0).reset_index(drop = True)
+        df = pd.concat(mortality_all + mortality_female + mortality_male, axis = 0).sort_values(['FIPS','Site']).reset_index(drop = True)
+        if df.FIPS.eq('51917').sum(): # if we find 51917 in FIPS
+            vaFix = {'51917': '51019', 'Bedford City and County' : 'Bedford County'}
+            df = df.replace(vaFix)
         return df
 
         
