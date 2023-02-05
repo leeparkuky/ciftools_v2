@@ -925,8 +925,7 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
         if result_count == 200:
             df = df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
             if count % 7 == 0 :
-                print(location)
-                if (datasets[-1] == df).sum().sum() == 1000:
+                if (datasets[-1] == df).sum().sum() == df.shape[0]*df.shape[1]:
                     result = pd.concat(datasets, axis = 0).reset_index(drop = True)
                     result = result.drop_duplicates()
                     return result
