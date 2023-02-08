@@ -58,7 +58,8 @@ def write_bash_script(bash_file_name: str,
                       census_api_key: str, 
                       cif_data_pull = True,
                      generate_zip_file = True,
-                     install_packages = False):
+                     install_packages = False,
+                     **kwargs):
     
     
     ca_dir = catchment_area_name.replace(" ", "_") + "_catchment_data"
@@ -66,6 +67,13 @@ def write_bash_script(bash_file_name: str,
     
     ca_file_path = check_ca_file(ca_file_path)
     
+    if 'socrata_user_name' in kwargs.keys():
+        socrata = True
+    else:
+        socrata = False
+    
+#     for key, value in kwargs.items():
+#         print("%s == %s" % (key, value))
     
     
     if isinstance(query_level, str):
@@ -104,6 +112,8 @@ def write_bash_script(bash_file_name: str,
         f.write('clear');
         f.write('\n\n\n')
         f.write(f"python CIFTools.py --ca_file_path $ca_file_path --query_level {query_level} --year $year --census_api_key $census_api_key");
+        if socrata:
+            f.write(f' --socrata_user_name "{kwargs["socrata_user_name"]}" --socrata_password "{kwargs["socrata_password"]}"');
         f.write('\n\n')
         output = os.path.join(os.getcwd(), 'cif_raw_data.pickle')
         if cif_data_pull:

@@ -58,7 +58,13 @@ def merge_all(*args, query_level = 'county'):
                 assert hasattr(df, col)
             output = df.copy()
         else:
-            output = output.merge(df, how = 'left', on = geo_col)
+            if df.shape[0] > output.shape[0]:
+                if all([ hasattr(df, col) for col in geo_col ]):
+                    output = output.merge(df, how= 'right', on = geo_col)
+                else:
+                    output = output.merge(df, how = 'left', on = geo_col)
+            else:
+                output = output.merge(df, how = 'left', on = geo_col)
     if len(datasets_not_to_merge):
         for df, merge_on_col in zip(datasets_not_to_merge, columns_to_be_used_later):
             output = output.merge(df, how = 'left', on = merge_on_col)
@@ -323,9 +329,9 @@ if __name__ == '__main__':
     
     #### env
     env_topic = ['water_violation','food_desert']
-    data_dictionary['county']['water_violation'] = data_dictionary['county']['vacancy'].merge(data_dictionary['county']['water_violation'], on = ['County','State']).sort_values('FIPS').reset_index(drop = True)
+    data_dictionary['county']['water_violation'] = data_dictionary['county']['vacancy'].merge(data_dictionary['county']['water_violation'], on = ['County','State'], how = 'left').sort_values('FIPS').reset_index(drop = True)
     data_dictionary['county']['water_violation'] = data_dictionary['county']['water_violation'].drop('vacancy_rate', axis = 1)
-    data_dictionary['tract']['food_desert'] = data_dictionary['tract']['vacancy'].merge(data_dictionary['tract']['food_desert']).drop(['vacancy_rate'],axis = 1)
+    data_dictionary['tract']['food_desert'] = data_dictionary['tract']['vacancy'].merge(data_dictionary['tract']['food_desert'], how = 'left').drop(['vacancy_rate'],axis = 1)
     env_county = organize_table(env_topic, 'county')
     env_tract = organize_table(env_topic, 'tract')
     env_county_l = pd.melt(env_county, id_vars = ['FIPS', 'County', 'State'], 

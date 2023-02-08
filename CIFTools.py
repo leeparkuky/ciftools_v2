@@ -662,8 +662,10 @@ def toxRel_data(location:Union[str, List[str]]):
     
 def gen_single_superfund(location: str):
     assert len(location) == 2; assert location.isalpha()
-    url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location}/CSV'
-    sf = pd.read_csv(url, dtype = {'SITE_FIPS_CODE':str, 'SITE_FIPS_CODE':str})
+    url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location}/JSON'
+    sf = pd.read_json(url, dtype = {'SITE_FIPS_CODE':str, 'SITE_ZIP_CODE':str})
+    sf.SITE_FIPS_CODE = sf.SITE_FIPS_CODE.apply(lambda x: x[:5])
+    sf.SITE_ZIP_CODE = sf.SITE_ZIP_CODE.apply(lambda x: x[:5])
     sf2 = sf.loc[sf.NPL.isin(['Currently on the Final NPL', 'Deleted from the Final NPL'])]
     sf3 = sf2[['SITE_NAME', 'SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE',
              'SITE_FIPS_CODE', 'NPL', 'LATITUDE', 'LONGITUDE']]
@@ -685,8 +687,9 @@ def superfund(location: Union[str, List[str]]):
             location = stateDf.loc[stateDf.FIPS2.eq(location),'StateAbbrev'].values[0]
         try:
             df = gen_single_superfund(location)
+            df = df.reset_index(drop = True)
         except:
-            print(f'superfund data for {location} is not available')
+            print(f'\nsuperfund data for {location} is not available\n')
             df = None
     else:
         if any([x.isnumeric() for x in location]):
@@ -929,7 +932,11 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
         if result_count == 200:
             df = df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
             if count % 7 == 0 :
-                if (datasets[-1] == df).sum().sum() == df.shape[0]*df.shape[1]:
+                if (datasets[-1].shape[0]==200) & (df.shape[0] < 200): 
+                    result = pd.concat(datasets, axis = 0).reset_index(drop = True)
+                    result = result.drop_duplicates()
+                    return result
+                elif datasets[-1].shape[0] == df.shape[0]:
                     result = pd.concat(datasets, axis = 0).reset_index(drop = True)
                     result = result.drop_duplicates()
                     return result
@@ -1365,7 +1372,7 @@ class food_desert:
         else:
             for s in state:
                 assert len(s) == 2
-            df = df.loc[df.State.isin(state)].reset_index(drop = True)
+            df = df.loc[df.State.isin(state),:].reset_index(drop = True)
         df = df[['CensusTract', var_name, 'OHU2010']]
         df2 = df.copy()
         data_dictionary = {}
@@ -1376,6 +1383,7 @@ class food_desert:
         data_dictionary['Tract'] = df
         # County
         df2['FIPS'] = [str(x)[:5] for x in df2.CensusTract]
+        df2 = df2.loc[df2.OHU2010.gt(0),['FIPS',var_name,'OHU2010']]
         df2 = df2[['FIPS',var_name,'OHU2010']].groupby('FIPS', as_index = False).apply(lambda x: pd.Series(np.average(x[var_name], weights=x['OHU2010'])))
         df2.columns = ['FIPS',var_name]
         df2['FIPS'] = df2.FIPS.astype(str)
@@ -1702,10 +1710,10 @@ class places_data:
         
     def places_county(self):
         if isinstance(self.state, str):
-            results = self.config.client.get("i46a-9kgh", where=f'stateabbr="{self.state}"')
+            results = self.config.client.get("i46a-9kgh", where=f'stateabbr="{self.state}"',  limit = 100_000)
         else:
             state = '("' + '","'.join(self.state) + '")'
-            results = self.config.client.get("i46a-9kgh", where=f'stateabbr in {state}')
+            results = self.config.client.get("i46a-9kgh", where=f'stateabbr in {state}',  limit = 100_000)
         results_df = pd.DataFrame.from_records(results)
         results_df2 = results_df.loc[:, results_df.columns.isin(['countyfips', 'countyname', 'stateabbr', 'cancer_crudeprev', 
                                   'cervical_crudeprev', 'colon_screen_crudeprev',
@@ -1736,10 +1744,11 @@ class places_data:
         
     def places_tract(self):
         if isinstance(self.state, str):
-            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr="{self.state}"', limit = "10000")
+            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr="{self.state}"', limit = 100_000)
         else:
-            state = '("' + '","'.join(self.state) + '")'            
-            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr in {state}', limit = "10000")
+            state = '("' + '","'.join(self.state) + '")'
+#             while 
+            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr in {state}', offset = 0, limit = 100_000)
 
         results_df = pd.DataFrame.from_records(results)
         results_df2 = results_df.loc[:, results_df.columns.isin(['tractfips', 'countyfips', 'countyname', 

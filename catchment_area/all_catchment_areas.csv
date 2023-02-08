@@ -1,4 +1,4 @@
-FIPS,COUNTY,STATE,name,name_short,designation
+FIPS,County,State,name,name_short,designation
 10003,New Castle,DE,Abramson Cancer Center at University of Pennsylvania,penn,Comprehensive
 34001,Atlantic,NJ,Abramson Cancer Center at University of Pennsylvania,penn,Comprehensive
 34005,Burlington,NJ,Abramson Cancer Center at University of Pennsylvania,penn,Comprehensive
@@ -95,11 +95,11 @@ FIPS,COUNTY,STATE,name,name_short,designation
 29221,Washington,MO,Alvin J. Siteman Cancer Center at Washington University School of Medicine & Barn,wash_u,Comprehensive
 29223,Wayne,MO,Alvin J. Siteman Cancer Center at Washington University School of Medicine & Barn,wash_u,Comprehensive
 29510,St. Louis City,MO,Alvin J. Siteman Cancer Center at Washington University School of Medicine & Barn,wash_u,Comprehensive
-4003,Cochise,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
-4019,Pima,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
-4021,Pinal,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
-4023,Santa Cruz,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
-4027,Yuma,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
+04003,Cochise,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
+04019,Pima,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
+04021,Pinal,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
+04023,Santa Cruz,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
+04027,Yuma,AZ,Arizona Cancer Center at University of Arizona,arizona,Comprehensive
 26001,Alcona,MI,Barbara Ann Karmanos Cancer Institute at Wayne State University School of Medicin,wayne_st,Comprehensive
 26007,Alpena,MI,Barbara Ann Karmanos Cancer Institute at Wayne State University School of Medicin,wayne_st,Comprehensive
 26009,Antrim,MI,Barbara Ann Karmanos Cancer Institute at Wayne State University School of Medicin,wayne_st,Comprehensive
@@ -161,11 +161,11 @@ FIPS,COUNTY,STATE,name,name_short,designation
 39153,Summit,OH,Case Comprehensive Cancer Center at Case Western Reserve University,case_western,Comprehensive
 39155,Trumbull,OH,Case Comprehensive Cancer Center at Case Western Reserve University,case_western,Comprehensive
 39169,Wayne,OH,Case Comprehensive Cancer Center at Case Western Reserve University,case_western,Comprehensive
-6059,Orange,CA,Chao Family Comprehensive Cancer Center at University of California Irvine,uc_irvine,Comprehensive
-6037,Los Angeles,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
-6059,Orange,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
-6065,Riverside,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
-6071,San Bernardino,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
+06059,Orange,CA,Chao Family Comprehensive Cancer Center at University of California Irvine,uc_irvine,Comprehensive
+06037,Los Angeles,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
+06059,Orange,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
+06065,Riverside,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
+06071,San Bernardino,CA,City of Hope Comprehensive Cancer Center,city_of_hope,Comprehensive
 48015,Austin,TX,Dan L. Duncan Comprehensive Cancer Center at Baylor College of Medicine,baylor,Comprehensive
 48039,Brazoria,TX,Dan L. Duncan Comprehensive Cancer Center at Baylor College of Medicine,baylor,Comprehensive
 48071,Chambers,TX,Dan L. Duncan Comprehensive Cancer Center at Baylor College of Medicine,baylor,Comprehensive
@@ -443,7 +443,7 @@ FIPS,COUNTY,STATE,name,name_short,designation
 48425,Somervell,TX,Harold C. Simmons Comprehensive Cancer Center at University of Texas Southwestern,utsw,Comprehensive
 48439,Tarrant,TX,Harold C. Simmons Comprehensive Cancer Center at University of Texas Southwestern,utsw,Comprehensive
 48497,Wise,TX,Harold C. Simmons Comprehensive Cancer Center at University of Texas Southwestern,utsw,Comprehensive
-9001,Fairfield,CT,Herbert Irving Comprehensive Cancer Center at Columbia University,columbia,Comprehensive
+09001,Fairfield,CT,Herbert Irving Comprehensive Cancer Center at Columbia University,columbia,Comprehensive
 34003,Bergen,NJ,Herbert Irving Comprehensive Cancer Center at Columbia University,columbia,Comprehensive
 36005,Bronx,NY,Herbert Irving Comprehensive Cancer Center at Columbia University,columbia,Comprehensive
 36047,Kings,NY,Herbert Irving Comprehensive Cancer Center at Columbia University,columbia,Comprehensive
@@ -858,7 +858,7 @@ FIPS,COUNTY,STATE,name,name_short,designation
 18179,Wells,IN,Indiana University Melvin & Bren Simon Comprehensive Cancer Center,iu,Comprehensive
 18181,White,IN,Indiana University Melvin & Bren Simon Comprehensive Cancer Center,iu,Comprehensive
 18183,Whitley,IN,Indiana University Melvin & Bren Simon Comprehensive Cancer Center,iu,Comprehensive
-6037,Los Angeles,CA,Jonsson Comprehensive Cancer Center at University of California at Los Angeles,ucla,Comprehensive
+06037,Los Angeles,CA,Jonsson Comprehensive Cancer Center at University of California at Los Angeles,ucla,Comprehensive
 41001,Baker,OR,Knight Cancer Institute at Oregon Health & Science University,oregon,Comprehensive
 41003,Benton,OR,Knight Cancer Institute at Oregon Health & Science University,oregon,Comprehensive
 41005,Clackamas,OR,Knight Cancer Institute at Oregon Health & Science University,oregon,Comprehensive
@@ -1173,7 +1173,7 @@ FIPS,COUNTY,STATE,name,name_short,designation
 51800,Suffolk,VA,Massey Cancer Center at Virginia Commonwealth University,vcu,Not Comprehensive
 51810,Virginia Beach,VA,Massey Cancer Center at Virginia Commonwealth University,vcu,Not Comprehensive
 51830,Williamsburg,VA,Massey Cancer Center at Virginia Commonwealth University,vcu,Not Comprehensive
-4013,Maricopa,AZ,Mayo Clinic Cancer Center,mayo,Comprehensive
+04013,Maricopa,AZ,Mayo Clinic Cancer Center,mayo,Comprehensive
 12003,Baker,FL,Mayo Clinic Cancer Center,mayo,Comprehensive
 12019,Clay,FL,Mayo Clinic Cancer Center,mayo,Comprehensive
 12031,Duval,FL,Mayo Clinic Cancer Center,mayo,Comprehensive
@@ -1262,13 +1262,13 @@ FIPS,COUNTY,STATE,name,name_short,designation
 48493,Wilson,TX,Mays Cancer Center at UT Health San Antonio University of Texas Health Science C,utsa,Not Comprehensive
 48505,Zapata,TX,Mays Cancer Center at UT Health San Antonio University of Texas Health Science C,utsa,Not Comprehensive
 48507,Zavala,TX,Mays Cancer Center at UT Health San Antonio University of Texas Health Science C,utsa,Not Comprehensive
-9001,Fairfield,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
-9003,Hartford,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
-9005,Litchfield,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
-9007,Middlesex,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
-9009,New Haven,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
-9011,New London,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
-9013,Tolland,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09001,Fairfield,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09003,Hartford,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09005,Litchfield,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09007,Middlesex,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09009,New Haven,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09011,New London,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
+09013,Tolland,CT,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
 25003,Berkshire,MA,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
 25013,Hampden,MA,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
 34001,Atlantic,NJ,Memorial Sloan-Kettering Cancer Center,msk,Comprehensive
@@ -1338,9 +1338,9 @@ FIPS,COUNTY,STATE,name,name_short,designation
 12105,Polk,FL,Moffitt Cancer Center,tampa,Comprehensive
 12115,Sarasota,FL,Moffitt Cancer Center,tampa,Comprehensive
 12119,Sumter,FL,Moffitt Cancer Center,tampa,Comprehensive
-6025,Imperial,CA,Moores Comprehensive Cancer Center at University of California San Diego,ucsd,Comprehensive
-6059,Orange,CA,Moores Comprehensive Cancer Center at University of California San Diego,ucsd,Comprehensive
-6073,San Diego,CA,Moores Comprehensive Cancer Center at University of California San Diego,ucsd,Comprehensive
+06025,Imperial,CA,Moores Comprehensive Cancer Center at University of California San Diego,ucsd,Comprehensive
+06059,Orange,CA,Moores Comprehensive Cancer Center at University of California San Diego,ucsd,Comprehensive
+06073,San Diego,CA,Moores Comprehensive Cancer Center at University of California San Diego,ucsd,Comprehensive
 33001,Belknap,NH,Norris Cotton Cancer Center at Dartmouth-Hitchcock Medical Center,dartmouth,Comprehensive
 33003,Carroll,NH,Norris Cotton Cancer Center at Dartmouth-Hitchcock Medical Center,dartmouth,Comprehensive
 33005,Cheshire,NH,Norris Cotton Cancer Center at Dartmouth-Hitchcock Medical Center,dartmouth,Comprehensive
@@ -1365,73 +1365,73 @@ FIPS,COUNTY,STATE,name,name_short,designation
 50023,Washington,VT,Norris Cotton Cancer Center at Dartmouth-Hitchcock Medical Center,dartmouth,Comprehensive
 50025,Windham,VT,Norris Cotton Cancer Center at Dartmouth-Hitchcock Medical Center,dartmouth,Comprehensive
 50027,Windsor,VT,Norris Cotton Cancer Center at Dartmouth-Hitchcock Medical Center,dartmouth,Comprehensive
-1001,Autauga,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1003,Baldwin,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1005,Barbour,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1007,Bibb,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1009,Blount,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1011,Bullock,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1013,Butler,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1015,Calhoun,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1017,Chambers,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1019,Cherokee,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1021,Chilton,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1023,Choctaw,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1025,Clarke,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1027,Clay,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1029,Cleburne,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1031,Coffee,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1033,Colbert,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1035,Conecuh,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1037,Coosa,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1039,Covington,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1041,Crenshaw,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1043,Cullman,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1045,Dale,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1047,Dallas,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1049,DeKalb,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1051,Elmore,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1053,Escambia,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1055,Etowah,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1057,Fayette,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1059,Franklin,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1061,Geneva,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1063,Greene,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1065,Hale,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1067,Henry,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1069,Houston,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1071,Jackson,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1073,Jefferson,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1075,Lamar,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1077,Lauderdale,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1079,Lawrence,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1081,Lee,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1083,Limestone,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1085,Lowndes,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1087,Macon,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1089,Madison,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1091,Marengo,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1093,Marion,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1095,Marshall,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1097,Mobile,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1099,Monroe,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1101,Montgomery,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1103,Morgan,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1105,Perry,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1107,Pickens,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1109,Pike,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1111,Randolph,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1113,Russell,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1115,St. Clair,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1117,Shelby,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1119,Sumter,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1121,Talladega,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1123,Tallapoosa,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1125,Tuscaloosa,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1127,Walker,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1129,Washington,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1131,Wilcox,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
-1133,Winston,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01001,Autauga,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01003,Baldwin,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01005,Barbour,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01007,Bibb,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01009,Blount,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01011,Bullock,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01013,Butler,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01015,Calhoun,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01017,Chambers,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01019,Cherokee,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01021,Chilton,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01023,Choctaw,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01025,Clarke,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01027,Clay,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01029,Cleburne,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01031,Coffee,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01033,Colbert,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01035,Conecuh,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01037,Coosa,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01039,Covington,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01041,Crenshaw,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01043,Cullman,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01045,Dale,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01047,Dallas,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01049,DeKalb,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01051,Elmore,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01053,Escambia,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01055,Etowah,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01057,Fayette,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01059,Franklin,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01061,Geneva,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01063,Greene,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01065,Hale,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01067,Henry,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01069,Houston,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01071,Jackson,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01073,Jefferson,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01075,Lamar,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01077,Lauderdale,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01079,Lawrence,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01081,Lee,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01083,Limestone,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01085,Lowndes,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01087,Macon,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01089,Madison,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01091,Marengo,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01093,Marion,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01095,Marshall,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01097,Mobile,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01099,Monroe,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01101,Montgomery,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01103,Morgan,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01105,Perry,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01107,Pickens,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01109,Pike,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01111,Randolph,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01113,Russell,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01115,St. Clair,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01117,Shelby,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01119,Sumter,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01121,Talladega,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01123,Tallapoosa,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01125,Tuscaloosa,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01127,Walker,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01129,Washington,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01131,Wilcox,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
+01133,Winston,AL,O'Neal Comprehensive Cancer Center at University of Alabama at Birmingham,uab,Comprehensive
 17031,Cook,IL,Robert H. Lurie Comprehensive Cancer Center at Northwestern University,northwestern,Comprehensive
 17043,DuPage,IL,Robert H. Lurie Comprehensive Cancer Center at Northwestern University,northwestern,Comprehensive
 17063,Grundy,IL,Robert H. Lurie Comprehensive Cancer Center at Northwestern University,northwestern,Comprehensive
@@ -1498,16 +1498,16 @@ FIPS,COUNTY,STATE,name,name_short,designation
 24045,Wicomico,MD,Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University,jhu,Comprehensive
 24047,Worcester,MD,Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University,jhu,Comprehensive
 24510,Baltimore City,MD,Sidney Kimmel Comprehensive Cancer Center at Johns Hopkins University,jhu,Comprehensive
-6001,Alameda,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6013,Contra Costa,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6047,Merced,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6053,Monterey,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6069,San Benito,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6077,San Joaquin,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6081,San Mateo,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6085,Santa Clara,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6087,Santa Cruz,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
-6099,Stanislaus,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06001,Alameda,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06013,Contra Costa,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06047,Merced,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06053,Monterey,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06069,San Benito,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06077,San Joaquin,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06081,San Mateo,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06085,Santa Clara,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06087,Santa Cruz,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
+06099,Stanislaus,CA,Stanford Cancer Institute at Stanford University,stanford,Comprehensive
 40001,Adair,OK,Stephenson Cancer Center at University of Oklahoma,oklahoma,Not Comprehensive
 40003,Alfalfa,OK,Stephenson Cancer Center at University of Oklahoma,oklahoma,Not Comprehensive
 40005,Atoka,OK,Stephenson Cancer Center at University of Oklahoma,oklahoma,Not Comprehensive
@@ -1682,51 +1682,51 @@ FIPS,COUNTY,STATE,name,name_short,designation
 36061,New York,NY,Tisch Cancer Institute at Icahn School of Medicine at Mount Sinai,mount_sinai,Not Comprehensive
 36081,Queens,NY,Tisch Cancer Institute at Icahn School of Medicine at Mount Sinai,mount_sinai,Not Comprehensive
 36085,Richmond,NY,Tisch Cancer Institute at Icahn School of Medicine at Mount Sinai,mount_sinai,Not Comprehensive
-6003,Alpine,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6005,Amador,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6007,Butte,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6009,Calaveras,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6011,Colusa,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6017,El Dorado,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6021,Glenn,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6047,Merced,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6057,Nevada,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6061,Placer,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6067,Sacramento,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6077,San Joaquin,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6091,Sierra,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6095,Solano,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6099,Stanislaus,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6101,Sutter,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6103,Tehama,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6113,Yolo,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6115,Yuba,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
-6001,Alameda,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6007,Butte,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6009,Calaveras,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6011,Colusa,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6013,Contra Costa,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6019,Fresno,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6021,Glenn,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6033,Lake,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6039,Madera,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6041,Marin,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6045,Mendocino,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6047,Merced,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6053,Monterey,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6055,Napa,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6067,Sacramento,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6069,San Benito,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6075,San Francisco,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6077,San Joaquin,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6081,San Mateo,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6085,Santa Clara,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6087,Santa Cruz,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6095,Solano,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6097,Sonoma,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6099,Stanislaus,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6101,Sutter,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
-6113,Yolo,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06003,Alpine,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06005,Amador,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06007,Butte,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06009,Calaveras,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06011,Colusa,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06017,El Dorado,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06021,Glenn,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06047,Merced,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06057,Nevada,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06061,Placer,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06067,Sacramento,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06077,San Joaquin,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06091,Sierra,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06095,Solano,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06099,Stanislaus,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06101,Sutter,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06103,Tehama,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06113,Yolo,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06115,Yuba,CA,UC Davis Comprehensive Cancer Center at University of California at Davis,uc_davis,Comprehensive
+06001,Alameda,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06007,Butte,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06009,Calaveras,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06011,Colusa,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06013,Contra Costa,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06019,Fresno,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06021,Glenn,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06033,Lake,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06039,Madera,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06041,Marin,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06045,Mendocino,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06047,Merced,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06053,Monterey,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06055,Napa,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06067,Sacramento,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06069,San Benito,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06075,San Francisco,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06077,San Joaquin,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06081,San Mateo,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06085,Santa Clara,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06087,Santa Cruz,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06095,Solano,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06097,Sonoma,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06099,Stanislaus,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06101,Sutter,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
+06113,Yolo,CA,UCSF Helen Diller Family Comprehensive Cancer Center at University of California,ucsf,Comprehensive
 37001,Alamance,NC,UNC Lineberger Comprehensive Cancer Center,unc,Comprehensive
 37003,Alexander,NC,UNC Lineberger Comprehensive Cancer Center,unc,Comprehensive
 37005,Alleghany,NC,UNC Lineberger Comprehensive Cancer Center,unc,Comprehensive
@@ -1837,70 +1837,70 @@ FIPS,COUNTY,STATE,name,name_short,designation
 18089,Lake,IN,University of Chicago Comprehensive Cancer Center,chicago,Comprehensive
 18091,LaPorte,IN,University of Chicago Comprehensive Cancer Center,chicago,Comprehensive
 18127,Porter,IN,University of Chicago Comprehensive Cancer Center,chicago,Comprehensive
-8001,Adams,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8003,Alamosa,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8005,Arapahoe,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8007,Archuleta,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8009,Baca,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8011,Bent,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8013,Boulder,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8014,Broomfield,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8015,Chaffee,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8017,Cheyenne,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8019,Clear Creek,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8021,Conejos,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8023,Costilla,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8025,Crowley,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8027,Custer,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8029,Delta,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8031,Denver,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8033,Dolores,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8035,Douglas,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8037,Eagle,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8039,Elbert,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8041,El Paso,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8043,Fremont,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8045,Garfield,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8047,Gilpin,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8049,Grand,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8051,Gunnison,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8053,Hinsdale,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8055,Huerfano,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8057,Jackson,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8059,Jefferson,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8061,Kiowa,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8063,Kit Carson,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8065,Lake,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8067,La Plata,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8069,Larimer,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8071,Las Animas,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8073,Lincoln,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8075,Logan,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8077,Mesa,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8079,Mineral,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8081,Moffat,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8083,Montezuma,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8085,Montrose,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8087,Morgan,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8089,Otero,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8091,Ouray,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8093,Park,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8095,Phillips,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8097,Pitkin,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8099,Prowers,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8101,Pueblo,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8103,Rio Blanco,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8105,Rio Grande,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8107,Routt,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8109,Saguache,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8111,San Juan,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8113,San Miguel,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8115,Sedgwick,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8117,Summit,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8119,Teller,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8121,Washington,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8123,Weld,CO,University of Colorado Cancer Center,colorado,Comprehensive
-8125,Yuma,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08001,Adams,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08003,Alamosa,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08005,Arapahoe,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08007,Archuleta,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08009,Baca,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08011,Bent,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08013,Boulder,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08014,Broomfield,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08015,Chaffee,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08017,Cheyenne,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08019,Clear Creek,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08021,Conejos,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08023,Costilla,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08025,Crowley,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08027,Custer,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08029,Delta,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08031,Denver,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08033,Dolores,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08035,Douglas,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08037,Eagle,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08039,Elbert,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08041,El Paso,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08043,Fremont,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08045,Garfield,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08047,Gilpin,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08049,Grand,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08051,Gunnison,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08053,Hinsdale,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08055,Huerfano,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08057,Jackson,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08059,Jefferson,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08061,Kiowa,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08063,Kit Carson,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08065,Lake,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08067,La Plata,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08069,Larimer,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08071,Las Animas,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08073,Lincoln,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08075,Logan,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08077,Mesa,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08079,Mineral,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08081,Moffat,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08083,Montezuma,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08085,Montrose,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08087,Morgan,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08089,Otero,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08091,Ouray,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08093,Park,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08095,Phillips,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08097,Pitkin,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08099,Prowers,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08101,Pueblo,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08103,Rio Blanco,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08105,Rio Grande,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08107,Routt,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08109,Saguache,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08111,San Juan,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08113,San Miguel,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08115,Sedgwick,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08117,Summit,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08119,Teller,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08121,Washington,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08123,Weld,CO,University of Colorado Cancer Center,colorado,Comprehensive
+08125,Yuma,CO,University of Colorado Cancer Center,colorado,Comprehensive
 15001,Hawaii,HI,University of Hawai'i Cancer Center,hawaii,Not Comprehensive
 15003,Honolulu,HI,University of Hawai'i Cancer Center,hawaii,Not Comprehensive
 15005,Kalawao,HI,University of Hawai'i Cancer Center,hawaii,Not Comprehensive
@@ -2599,13 +2599,13 @@ FIPS,COUNTY,STATE,name,name_short,designation
 42123,Warren,PA,UPMC Hillman Cancer Center,upmc,Comprehensive
 42125,Washington,PA,UPMC Hillman Cancer Center,upmc,Comprehensive
 42129,Westmoreland,PA,UPMC Hillman Cancer Center,upmc,Comprehensive
-6037,Los Angeles,CA,USC Norris Comprehensive Cancer Center at University of Southern California,usc,Comprehensive
-1033,Colbert,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
-1049,DeKalb,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
-1071,Jackson,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
-1077,Lauderdale,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
-1083,Limestone,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
-1089,Madison,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
+06037,Los Angeles,CA,USC Norris Comprehensive Cancer Center at University of Southern California,usc,Comprehensive
+01033,Colbert,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
+01049,DeKalb,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
+01071,Jackson,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
+01077,Lauderdale,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
+01083,Limestone,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
+01089,Madison,AL,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
 21003,Allen,KY,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
 21007,Ballard,KY,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
 21009,Barren,KY,Vanderbilt-Ingram Cancer Center,vandy,Comprehensive
@@ -2945,11 +2945,11 @@ FIPS,COUNTY,STATE,name,name_short,designation
 13317,Wilkes,GA,Winship Cancer Institute at Emory University,emory,Comprehensive
 13319,Wilkinson,GA,Winship Cancer Institute at Emory University,emory,Comprehensive
 13321,Worth,GA,Winship Cancer Institute at Emory University,emory,Comprehensive
-9001,Fairfield,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9003,Hartford,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9005,Litchfield,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9007,Middlesex,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9009,New Haven,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9011,New London,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9013,Tolland,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
-9015,Windham,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09001,Fairfield,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09003,Hartford,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09005,Litchfield,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09007,Middlesex,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09009,New Haven,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09011,New London,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09013,Tolland,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
+09015,Windham,CT,Yale Cancer Center at Yale University School of Medicine,yale,Comprehensive
