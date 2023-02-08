@@ -110,7 +110,7 @@ if __name__ == '__main__':
     Parallel(n_jobs = -1)(delayed(gen_zip_file_partial)(abb) for abb in ca.name_short.unique().tolist())
     
     os.remove('cif_raw_data.pickle');
-    
+    os.remove('all_catchment_areas.sh')
     
 #     for abb in ca.name_short:
 #         gen_zip_file(abb, ca, data_dictionary)
