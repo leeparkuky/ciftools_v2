@@ -557,8 +557,8 @@ ten_year_age_groups = partial(find_index_for_age_group, age_group_dict = ten_yea
 def gen_facility_data(location:Union[List[str], str], taxonomy:List[str] = ['Gastroenterology','colon','obstetrics']):
     data_dict = {}
     data_dict['nppes'] = nppes(location)
-    functions = [mammography, hpsa, fqhc, lung_cancer_screening, toxRel_data, superfund]
-    dataset_names = ['mammography', 'hpsa','fqhc','lung_cancer_screening', 'tri_facility', 'superfund_site']
+    functions = [mammography, hpsa, fqhc, lung_cancer_screening, toxRel_data] #, superfund]
+    dataset_names = ['mammography', 'hpsa','fqhc','lung_cancer_screening', 'tri_facility'] #, 'superfund_site']
     datasets = Parallel(n_jobs=-1)(delayed(f)(location) for f in functions)
     for name, df in zip(dataset_names, datasets):
         data_dict[name] = df
@@ -1830,6 +1830,7 @@ if __name__ == '__main__':
     if args.ca_file_path:
         ca_file_path = check_ca_file(args.ca_file_path)
         ca = pd.read_csv(ca_file_path, dtype={'FIPS':str})
+        ca['FIPS'] = ca.FIPS.zfill(5)
         state_FIPS = ca.FIPS.apply(lambda x: x[:2]).unique().tolist()
         if len(state_FIPS) == 1:
             state_fips = state_FIPS[0]
