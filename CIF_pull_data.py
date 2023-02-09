@@ -14,7 +14,7 @@ def open_pickle_file(data_file_path):
 def open_ca_file(ca_file_path):
 # ca_file_path = './uky_ca.csv'
     ca = pd.read_csv(ca_file_path, dtype={'FIPS':str})
-    ca['FIPS'] = ca.FIPS.zfill(5)
+    ca['FIPS'] = ca.FIPS.str.zfill(5)
     if all(ca.County.str.contains('.+\sCounty')):
         pass
     elif all(ca.County.str.contains('.+\sParish')):

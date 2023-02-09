@@ -1830,7 +1830,7 @@ if __name__ == '__main__':
     if args.ca_file_path:
         ca_file_path = check_ca_file(args.ca_file_path)
         ca = pd.read_csv(ca_file_path, dtype={'FIPS':str})
-        ca['FIPS'] = ca.FIPS.zfill(5)
+        ca['FIPS'] = ca.FIPS.str.zfill(5)
         state_FIPS = ca.FIPS.apply(lambda x: x[:2]).unique().tolist()
         if len(state_FIPS) == 1:
             state_fips = state_FIPS[0]
