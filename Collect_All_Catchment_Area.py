@@ -26,13 +26,19 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
     cancer_center_state = catchment_area_df.loc[catchment_area_df.name_short.eq(cancer_center_name_abb),:].State.unique().tolist()
     cdata = {}
     for table_name, df in data_dictionary.items():
-        if 'tract' in table_name:
-            df['FIPS'] = df.FIPS.str.zfill(10)
-        elif 'county' in table_name:
-            df['FIPS'] = df.FIPS.str.zfill(5)
         if 'facilities' in table_name:
             cdata[table_name] = df.loc[df.State.isin(cancer_center_state),:]
+        elif 'tract' in table_name:
+            cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
         else:
+            cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
+#         if 'tract' in table_name:
+#             df['FIPS'] = df.FIPS.str.zfill(10)
+#         elif 'county' in table_name:
+#             df['FIPS'] = df.FIPS.str.zfill(5)
+#         if 'facilities' in table_name:
+#             cdata[table_name] = df.loc[df.State.isin(cancer_center_state),:]
+#         else:
             cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
     cdata['cancer_incidence'].to_csv(ca_name + '_cancer_incidence_county_' + today + '.csv', encoding='utf-8', index=True)
     cdata['cancer_mortality'].to_csv(ca_name + '_cancer_mortality_county_' + today + '.csv', encoding='utf-8', index=True)
