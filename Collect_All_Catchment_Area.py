@@ -67,7 +67,7 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
 #     cdata['broadband_speeds'].to_csv(ca_name + '_broadband_speeds_' + today + '.csv', encoding='utf-8', index=False)
     cdata['facilities_and_providers'].to_csv(ca_name + '_facilities_and_providers_' + today + '.csv', encoding='utf-8', index=False)
     
-    shutil.make_archive(os.path.join(os.getcwd(), 'data', cancer_center_name_abb), 'zip', directory_path)
+    shutil.make_archive(os.path.join(os.getcwd(), 'data', cancer_center_name_abb + '_ca'), 'zip', directory_path)
     shutil.rmtree(directory_path)
     return 1
     
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     "catchment_area_name": "all", # the name of the catchment area name
     "ca_file_path": "all_catchment_areas.csv",
     "query_level" : ['county','tract'],
-    "acs_year"    : 2019,
+    "acs_year"    : 2021,
     "download_file_type": ['pickle'],
     "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
     "generate_zip_file" : False,
