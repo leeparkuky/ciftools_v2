@@ -137,7 +137,7 @@ if __name__ == '__main__':
     "socrata_password" : "MarkeyCancer123!"
 }
     
-    spatial = True # set it true if you want to have shp files
+    spatial = False # set it true if you want to have shp files
     
     write_bash_script(**bash_script_kwargs)
     
