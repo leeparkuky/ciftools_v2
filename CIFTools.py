@@ -93,8 +93,6 @@ async def donwload_for_batch(config, table: str, key: str, session: ClientSessio
 
         
         
-        
-        
     resp = await session.request(method="GET", url=acs_url)
     resp.raise_for_status()    
     json_raw =  await resp.json()
@@ -1364,7 +1362,8 @@ class food_desert:
                 size = file.write(data)
                 bar.update(size)
 
-        df = pd.read_excel(fname, engine = 'openpyxl', sheet_name = 2)
+        df = pd.read_excel(fname, engine = 'openpyxl', sheet_name = 2, dtype = {"CensusTract":str}) # attention
+        df['CensusTract'] = df.CensusTract.str.zfill(11) # census tract fips is 11 digits code
         df['State'] = df.CensusTract.apply(lambda x: str(x)[:2])
         if isinstance(state, str):
             assert len(state) == 2

@@ -1,14 +1,110 @@
+#async packages
+from aiohttp import ClientSession
+import aiofiles
+import asyncio
+# basic python packages
 from dataclasses import dataclass
 from typing import Union, List
-from aiohttp import ClientSession
-import pandas as pd
 import requests
-import asyncio
 import re
 from io import StringIO
+from itertools import product
+# dataframes
+import pandas as pd
+import geopandas as gpd
+# file systems
 import chromedriver_autoinstaller
-import os
 from glob import glob
+import os
+import sys
+
+
+
+
+
+def census_shape(years: Union[List[str], List[int], str, int], states: Union[List[str], str]):
+    if sys.platform in ['win32','cygwin']:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        # tract first
+        tracts = asyncio.get_event_loop().run_until_complete(shape_download_all_tracts(years, states))
+    else:                                                     
+        tracts = asyncio.run(shape_download_all_tracts(years, states))
+    tracts = tracts.groupby(['FIPS','Tract'], as_index = False).last().reset_index(drop = True)
+    # then county
+    county = shape_county(states)
+    shape_dict = {'county_shape': county, 'tract_shape':tracts}
+    return shape_dict
+
+
+def shape_county(state_fips: Union[str, List[str]] = None, year = 2021):
+    url = f'https://www2.census.gov/geo/tiger/TIGER{year}/COUNTY/tl_{year}_us_county.zip'
+    gdf = gpd.read_file(url)
+    gdf.GEOID = gdf.GEOID.astype(str)
+    gdf = gdf[['GEOID','NAMELSAD','geometry']]
+    gdf = gdf.rename(columns = {'GEOID':'FIPS', 'NAMELSAD': 'County', 'geometry':'Shape'}).reset_index(drop = True)
+    if state_fips:
+        if isinstance(state_fips, str):
+            assert state_fips.isnumeric()
+            assert len(state_fips) == 2
+            gdf = gdf.loc[gdf.FIPS.str[:2].eq(state_fips),:].reset_index(drop = True)
+        else:
+            for s in state_fips:
+                assert s.isnumeric()
+                assert len(s) == 2
+            gdf = gdf.loc[gdf.FIPS.str[:2].isin(state_fips),:].reset_index(drop = True)
+    return gdf
+
+
+
+async def shape_tract_download(year: Union[str, int], state: str, session):
+    assert len(state) == 2
+    url = f"https://www2.census.gov/geo/tiger/TIGER{year}/TRACT/tl_{year}_{state}_tract.zip"
+    resp = await session.request(method="GET", url=url)
+    async with aiofiles.open(f'tl_{year}_{state}_tract.zip', 'wb') as f:
+#     async with aiofiles.tempfile.NamedTemporaryFile(suffix = '.zip') as f:
+        async for chunk in resp.content.iter_chunked(2**30):
+            await f.write(chunk)
+#     gdf = gpd.read_file(f.name, dtype = {'GEOID':str})
+    gdf = gpd.read_file(f'tl_{year}_{state}_tract.zip', dtype = {'GEOID':str})
+    gdf = gdf[['GEOID','NAMELSAD','geometry']]\
+    .rename(columns = {'GEOID':'FIPS','NAMELSAD':'Tract','geometry':'Shape'})\
+    .sort_values('FIPS').reset_index(drop = True)
+    os.remove(f'tl_{year}_{state}_tract.zip')
+    return gdf
+
+
+    
+async def shape_download_all_tracts(years: Union[List[str], List[int], str, int], states: Union[List[str], str]):
+    async with ClientSession() as session:
+        if isinstance(years, int) or isinstance(years, str):
+            if isinstance(states, str):
+                assert len(states) == 2
+                assert states.isnumeric()
+                tasks = [shape_tract_download(years, states, session)]
+            else:
+                tasks = [shape_tract_download(years, s, session) for s in states]
+        else:
+            if isinstance(states, str):
+                assert len(states) == 2
+                assert states.isnumeric()
+                tasks = [shape_tract_download(y, states, session) for y in years]
+            else:
+                tasks = [shape_tract_download(y, s, session) for s,y in product(states, years)]
+        tables = await asyncio.gather(*tasks)
+        if len(tables) > 1:
+            df = pd.concat(tables).drop_duplicates().reset_index(drop = True)
+        else:
+            df = tables[0].reset_index(drop = True)
+        return df
+
+
+
+
+
+
+
+
+
 
 def download_zip_files():
     if os.getenv("COLAB_RELEASE_TAG"):

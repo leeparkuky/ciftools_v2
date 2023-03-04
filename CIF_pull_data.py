@@ -1,9 +1,13 @@
 import pickle
 import pandas as pd
+import geopandas as gpd
 import numpy as np
-from utils import stateDf
+from utils import stateDf, census_shape
 from datetime import datetime as dt
 from functools import partial
+
+
+
 
 def open_pickle_file(data_file_path):
 # data_file_path = 'cif_raw_data.pickle'
@@ -36,7 +40,7 @@ def select_area_for_catchment_area_full(df, query_level, ca):
             df = df.loc[df.FIPS5.isin(ca.FIPS), :].reset_index(drop = True)
             df.drop('FIPS5', axis = 1, inplace = True)
         else:
-            df = df.loc[df.FIPS.apply(lambda x: x[:5]).isin(ca.FIPS), :].reset_index(drop = True)
+            df = df.loc[df.FIPS.str[:5].isin(ca.FIPS), :].reset_index(drop = True)
         return df
 
 def merge_all(*args, query_level = 'county'):
@@ -238,7 +242,10 @@ if __name__ == '__main__':
         
     if 'pickle' in args.download_file_type: # if pickle is the selected file format, we set the dataset name with pickle ext
         save_name = ca_name.replace(" ", "_") + '_catchment_data_' + dt.today().strftime('%m-%d-%Y') + '.pickle'
+        save_name_spatial = ca_name.replace(" ", "_") + '_catchment_data_spatial_' + dt.today().strftime('%m-%d-%Y') + '.pickle'
         pickle_download_path = os.path.join(path2, save_name)
+        pickle_download_path_spatial = os.path.join(path2, save_name_spatial)
+
     if 'excel' in args.download_file_type: # the same goes with excel, but it will create two separate excel files
         save_name = ca_name.replace(" ", "_") + '_catchment_data_' + dt.today().strftime('%m-%d-%Y') + '.xlsx'
         save_name2 = ca_name.replace(" ", "_") + '_catchment_data_long_' + dt.today().strftime('%m-%d-%Y') + '.xlsx'
@@ -250,11 +257,13 @@ if __name__ == '__main__':
         
         
         
-    #### importing data and ca_file
+    #### importing data and ca_file (and shapes)
     data_dictionary = open_pickle_file(args.pickle_data_path) # First provide pickle data created by CIFTools
-    
     ca = open_ca_file(args.ca_file_path)
     
+    states_unique = ca.FIPS.str[:2].unique().tolist()
+    years = [2015, 2019, 2021] # tract shape has changed in 2020
+    shapes = census_shape(years, states_unique)
     
     
     # update tqdm
@@ -332,9 +341,17 @@ if __name__ == '__main__':
     env_topic = ['water_violation','food_desert']
     data_dictionary['county']['water_violation'] = data_dictionary['county']['vacancy'].merge(data_dictionary['county']['water_violation'], on = ['County','State'], how = 'left').sort_values('FIPS').reset_index(drop = True)
     data_dictionary['county']['water_violation'] = data_dictionary['county']['water_violation'].drop('vacancy_rate', axis = 1)
-    data_dictionary['tract']['food_desert'] = data_dictionary['tract']['vacancy'].merge(data_dictionary['tract']['food_desert'], how = 'left').drop(['vacancy_rate'],axis = 1)
+    # food desert tracts are outdated (2010 ver.)
+    data_dictionary['tract']['food_desert'].FIPS = data_dictionary['tract']['food_desert'].FIPS.str.zfill(11)
+    data_dictionary['tract']['food_desert'] = select_area_for_catchment_area(data_dictionary['tract']['food_desert'], 'tract')
+    all_counties = data_dictionary['county']['demographic_age'][['FIPS','County','State']]
+    county_states = data_dictionary['tract']['food_desert'].FIPS.str[:5].apply(lambda x: all_counties.loc[all_counties.FIPS.eq(x),['County','State']].values.tolist())
+    data_dictionary['tract']['food_desert'][['County','State']] = [x[0] for x in county_states.tolist()]
+    env_tract = data_dictionary['tract']['food_desert'].merge(shapes['tract_shape'], how = 'left')
+    env_tract = env_tract[['FIPS', 'Tract', 'County', 'State', 'LILATracts_Vehicle']].reset_index(drop = True)
+#     data_dictionary['tract']['vacancy'].merge(data_dictionary['tract']['food_desert'], how = 'left').drop(['vacancy_rate'],axis = 1)
     env_county = organize_table(env_topic, 'county')
-    env_tract = organize_table(env_topic, 'tract')
+#     env_tract = organize_table(env_topic, 'tract')
     env_county_l = pd.melt(env_county, id_vars = ['FIPS', 'County', 'State'], 
                             var_name = 'measure', value_name = 'value')
     env_tract_l = pd.melt(env_tract, id_vars = ['FIPS','Tract','County','State'], 
@@ -361,6 +378,17 @@ if __name__ == '__main__':
                 'environment_tract': env_tract, 'environment_tract_long': env_tract_l,
                  'facilities_and_providers': point_df}
     
+    #### cdata_with_spatial_information
+    cdata_spatial = {}
+    for table_name, df in cdata.items():
+        if table_name[-6:] == 'county':
+            df = df.merge(shapes['county_shape'], how = 'left')
+            cdata_spatial[table_name] = df
+        elif table_name[-5:] == 'tract':
+            df = df.merge(shapes['tract_shape'], how = 'left')
+            cdata_spatial[table_name] = df
+    
+
     pbar.update(1)
     pbar.set_description("saving datasets")
 
@@ -368,6 +396,11 @@ if __name__ == '__main__':
         with open(pickle_download_path, 'wb') as dataset:
             pickle.dump(cdata, dataset, protocol=pickle.HIGHEST_PROTOCOL)
         print(f'dataset is stored at {pickle_download_path}')
+        
+        with open(pickle_download_path_spatial, 'wb') as dataset:
+            pickle.dump(cdata_spatial, dataset, protocol=pickle.HIGHEST_PROTOCOL)
+        print(f'spatial dataset is stored at {pickle_download_path_spatial}')
+        
         pbar.update(1)
         pbar.set_description("pickle file is saved")
     else:
