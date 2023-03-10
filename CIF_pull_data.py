@@ -376,17 +376,8 @@ if __name__ == '__main__':
                 'sociodemographics_tract': sociodemo_tract, 'sd_tract_long': sd_tract_l,
                 'environment_county': env_county, 'environment_county_long': env_county_l,
                 'environment_tract': env_tract, 'environment_tract_long': env_tract_l,
-                 'facilities_and_providers': point_df}
+                 'facilities_and_providers': point_df, 'shapes':shapes}
     
-    #### cdata_with_spatial_information
-    cdata_spatial = {}
-    for table_name, df in cdata.items():
-        if table_name[-6:] == 'county':
-            df = df.merge(shapes['county_shape'], how = 'left')
-            cdata_spatial[table_name] = df
-        elif table_name[-5:] == 'tract':
-            df = df.merge(shapes['tract_shape'], how = 'left')
-            cdata_spatial[table_name] = df
     
 
     pbar.update(1)
@@ -396,11 +387,6 @@ if __name__ == '__main__':
         with open(pickle_download_path, 'wb') as dataset:
             pickle.dump(cdata, dataset, protocol=pickle.HIGHEST_PROTOCOL)
         print(f'dataset is stored at {pickle_download_path}')
-        
-        with open(pickle_download_path_spatial, 'wb') as dataset:
-            pickle.dump(cdata_spatial, dataset, protocol=pickle.HIGHEST_PROTOCOL)
-        print(f'spatial dataset is stored at {pickle_download_path_spatial}')
-        
         pbar.update(1)
         pbar.set_description("pickle file is saved")
     else:

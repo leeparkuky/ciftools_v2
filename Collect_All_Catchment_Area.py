@@ -13,6 +13,11 @@ from joblib import Parallel, delayed
 from datetime import datetime as dt
 import shutil
 from functools import partial
+from typing import Union, List
+from tqdm import tqdm
+
+multi_processing = False
+
 
 
 today = dt.today().strftime('%m-%d-%Y')
@@ -55,24 +60,27 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
     directory_path = os.path.join(os.getcwd(), cancer_center_name_abb) # folder that will contain csv files
     ca_name = os.path.join(os.getcwd(), cancer_center_name_abb, cancer_center_name_abb) # will be used for file_name
     os.mkdir(cancer_center_name_abb) #create the folder
-    cancer_center_fips = catchment_area_df.loc[catchment_area_df.name_short.eq(cancer_center_name_abb),:].FIPS.tolist()
-    cancer_center_state = catchment_area_df.loc[catchment_area_df.name_short.eq(cancer_center_name_abb),:].State.unique().tolist()
+    catchment_area_df = catchment_area_df.loc[catchment_area_df.name_short.eq(cancer_center_name_abb),:]
+    cancer_center_fips = catchment_area_df.FIPS.unique().tolist()
+    cancer_center_state = catchment_area_df.State.unique().tolist()
     cdata = {}
     for table_name, df in data_dictionary.items():
         if 'facilities' in table_name:
             cdata[table_name] = df.loc[df.State.isin(cancer_center_state),:]
         elif 'tract' in table_name:
             cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
+        elif 'shape' in table_name: # shape tables
+            county_shape = df['county_shape']; tract_shape = df['tract_shape']
+            county_shape = county_shape.loc[county_shape.FIPS.isin(cancer_center_fips),:].sort_values('FIPS').reset_index(drop = True)
+            tract_shape = tract_shape.loc[tract_shape.FIPS.str[:5].isin(cancer_center_fips),:].sort_values('FIPS').reset_index(drop = True)
+            county_shape = gpd.GeoDataFrame(county_shape); county_shape = county_shape.set_geometry('Shape')
+            tract_shape =  gpd.GeoDataFrame(tract_shape);  tract_shape  = tract_shape.set_geometry('Shape')
+            cdata['county_shape'] = county_shape
+            cdata['tract_shape'] = tract_shape
         else:
             cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
-#         if 'tract' in table_name:
-#             df['FIPS'] = df.FIPS.str.zfill(10)
-#         elif 'county' in table_name:
-#             df['FIPS'] = df.FIPS.str.zfill(5)
-#         if 'facilities' in table_name:
-#             cdata[table_name] = df.loc[df.State.isin(cancer_center_state),:]
-#         else:
-            cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
+    cdata['county_shape'].to_file(ca_name + '_county_shape')
+    cdata['tract_shape'].to_file(ca_name + '_tract_shape')
     cdata['cancer_incidence'].to_csv(ca_name + '_cancer_incidence_county_' + today + '.csv', encoding='utf-8', index=True)
     cdata['cancer_mortality'].to_csv(ca_name + '_cancer_mortality_county_' + today + '.csv', encoding='utf-8', index=True)
     cdata['cancer_incidence_long'].to_csv(ca_name + '_cancer_incidence_county_long_' + today + '.csv', encoding='utf-8', index=False)
@@ -118,55 +126,47 @@ def gen_shapes(fips):
 
 
 
-
-
-
 if __name__ == '__main__':
     
-    bash_script_kwargs = {
-    "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
-    "catchment_area_name": "all", # the name of the catchment area name
-    "ca_file_path": "all_catchment_areas.csv",
-    "query_level" : ['county','tract'],
-    "acs_year"    : 2019,
-    "download_file_type": ['pickle'],
-    "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
-    "generate_zip_file" : False,
-    "install_packages" : False, # We already installed required packages above,
-    "socrata_user_name": "ciodata@uky.edu",
-    "socrata_password" : "MarkeyCancer123!"
-}
-    
-    spatial = False # set it true if you want to have shp files
-    
-    write_bash_script(**bash_script_kwargs)
+#     bash_script_kwargs = {
+#     "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
+#     "catchment_area_name": "all", # the name of the catchment area name
+#     "ca_file_path": "all_catchment_areas.csv",
+#     "query_level" : ['county','tract'],
+#     "acs_year"    : 2019,
+#     "download_file_type": ['pickle'],
+#     "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
+#     "generate_zip_file" : False,
+#     "install_packages" : False, # We already installed required packages above,
+#     "socrata_user_name": "ciodata@uky.edu",
+#     "socrata_password" : "MarkeyCancer123!"
+# }
+        
+#     write_bash_script(**bash_script_kwargs)
     
     
     
-    subprocess.run(["bash", "all_catchment_areas.sh"])
+#     subprocess.run(["bash", "all_catchment_areas.sh"])
 
     ca_path = glob('*/all_catchment_areas.csv')[0]
     ca = pd.read_csv(ca_path, dtype = {"FIPS":str})
     ca['FIPS'] = ca.FIPS.str.zfill(5)
     pickle_path = [x for x in glob('*/all_catchment_data_*.pickle') if 'spatial' not in x][0]
-    spatial_pickle_path = glob('*/all_catchment_data_spatial*.pickle')[0]
     with open(pickle_path, 'rb') as f:
         data_dictionary = pickle.load(f)
-    with open(spatial_pickle_path, 'rb') as f:
-        spatial_data_dictionary = pickle.load(f)
+        
+        
     if os.path.exists(os.path.join(os.getcwd(), 'data')):
         pass
     else:
         os.mkdir('data')
     
     gen_zip_file_partial = partial(gen_zip_file, catchment_area_df = ca, data_dictionary = data_dictionary)
-    gen_zip_spatial_file_partial = partial(gen_spatial_zip_file, catchment_area_df = ca, data_dictionary = spatial_data_dictionary)
-
-    
-    Parallel(n_jobs = -1)(delayed(gen_zip_file_partial)(abb) for abb in ca.name_short.unique().tolist())
-    if spatial:
-        Parallel(n_jobs = -1)(delayed(gen_zip_spatial_file_partial)(abb) for abb in ca.name_short.unique().tolist())
-
+    if multi_processing:
+        Parallel(n_jobs = -1)(delayed(gen_zip_file_partial)(abb) for abb in tqdm(ca.name_short.unique().tolist()))
+    else:
+        for abb in tqdm(ca.name_short.unique().tolist()):
+            gen_zip_file_partial(abb)
     os.remove('cif_raw_data.pickle');
     os.remove('all_catchment_areas.sh')
     
