@@ -128,25 +128,25 @@ def gen_shapes(fips):
 
 if __name__ == '__main__':
     
-#     bash_script_kwargs = {
-#     "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
-#     "catchment_area_name": "all", # the name of the catchment area name
-#     "ca_file_path": "all_catchment_areas.csv",
-#     "query_level" : ['county','tract'],
-#     "acs_year"    : 2019,
-#     "download_file_type": ['pickle'],
-#     "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
-#     "generate_zip_file" : False,
-#     "install_packages" : False, # We already installed required packages above,
-#     "socrata_user_name": "ciodata@uky.edu",
-#     "socrata_password" : "MarkeyCancer123!"
-# }
+    bash_script_kwargs = {
+    "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
+    "catchment_area_name": "all", # the name of the catchment area name
+    "ca_file_path": "all_catchment_areas.csv",
+    "query_level" : ['county','tract'],
+    "acs_year"    : 2019,
+    "download_file_type": ['pickle'],
+    "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
+    "generate_zip_file" : False,
+    "install_packages" : False, # We already installed required packages above,
+    "socrata_user_name": "ciodata@uky.edu",
+    "socrata_password" : "MarkeyCancer123!"
+}
         
-#     write_bash_script(**bash_script_kwargs)
+    write_bash_script(**bash_script_kwargs)
     
     
     
-#     subprocess.run(["bash", "all_catchment_areas.sh"])
+    subprocess.run(["bash", "all_catchment_areas.sh"])
 
     ca_path = glob('*/all_catchment_areas.csv')[0]
     ca = pd.read_csv(ca_path, dtype = {"FIPS":str})
