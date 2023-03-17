@@ -151,7 +151,7 @@ if __name__ == '__main__':
     ca_path = glob('*/all_catchment_areas.csv')[0]
     ca = pd.read_csv(ca_path, dtype = {"FIPS":str})
     ca['FIPS'] = ca.FIPS.str.zfill(5)
-    pickle_path = [x for x in glob('*/all_catchment_data_*.pickle') if 'spatial' not in x][0]
+    pickle_path = [x for x in glob('*/all_catchment_data*.pickle') if 'spatial' not in x][0]
     with open(pickle_path, 'rb') as f:
         data_dictionary = pickle.load(f)
         

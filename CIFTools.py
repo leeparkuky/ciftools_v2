@@ -916,20 +916,21 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
         resp = requests.get(url)
         output = resp.json()
         result_count = output['result_count']
-        df = pd.DataFrame(output['results'])
-        df['Name'] = df.basic.apply(parse_basic)
-        df['Phone_number'] = df.addresses.apply(lambda x: parse_address(x)[1])
-        df['Address'] = df.addresses.apply(lambda x: parse_address(x)[0])
-        df['State'] = df.addresses.apply(lambda x: parse_address(x)[2])
-        df = df.loc[df.State.eq(location), :].reset_index(drop = True)
-        if taxonomy in taxonomy_names.keys():
-            df['Type']    = taxonomy_names[taxonomy]
-        else:
-            df['Type']    = taxonomy
-        df['Notes']   = ['' if x[-5:].isnumeric() else 'missing zip code' for x in df.Address] # MA has one missing zip code
-        if result_count == 200:
+        if result_count:
+            df = pd.DataFrame(output['results'])
+            df['Name'] = df.basic.apply(parse_basic)
+            df['Phone_number'] = df.addresses.apply(lambda x: parse_address(x)[1])
+            df['Address'] = df.addresses.apply(lambda x: parse_address(x)[0])
+            df['State'] = df.addresses.apply(lambda x: parse_address(x)[2])
+            df = df.loc[df.State.eq(location), :].reset_index(drop = True)
+            if taxonomy in taxonomy_names.keys():
+                df['Type']    = taxonomy_names[taxonomy]
+            else:
+                df['Type']    = taxonomy
+            df['Notes']   = ['' if x[-5:].isnumeric() else 'missing zip code' for x in df.Address] # MA has one missing zip code
+        if result_count == 200: # if result_count is 200, it is very likely to have more data
             df = df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
-            if count % 7 == 0 :
+            if count % 7 == 0 : # sometimes, it returns the same datasets over and over
                 if (datasets[-1].shape[0]==200) & (df.shape[0] < 200): 
                     result = pd.concat(datasets, axis = 0).reset_index(drop = True)
                     result = result.drop_duplicates()
@@ -941,10 +942,16 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
             else:
                 datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
         elif count == 1:
-            return df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
+            if result_count:
+                return df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
+            else:
+                df = pd.DataFrame(columns = ['Type','Name','Address','State', 'Phone_number', 'Notes'])
+                return df
         else:
-            datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
-            result = pd.concat(datasets, axis = 0).reset_index(drop = True)
+            if result_count:
+                datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
+            else:
+                result = pd.concat(datasets, axis = 0).reset_index(drop = True)
             return result
         
 def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterology','colon','obstetrics']) -> pd.DataFrame:
