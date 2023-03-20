@@ -1,84 +1,83 @@
-"FIPS","County","State"
-"17001","Adams","Illinois"
-"17003","Alexander","Illinois"
-"17005","Bond","Illinois"
-"17013","Calhoun","Illinois"
-"17021","Christian","Illinois"
-"17025","Clay","Illinois"
-"17027","Clinton","Illinois"
-"17047","Edwards","Illinois"
-"17049","Effingham","Illinois"
-"17051","Fayette","Illinois"
-"17055","Franklin","Illinois"
-"17059","Gallatin","Illinois"
-"17061","Greene","Illinois"
-"17065","Hamilton","Illinois"
-"17069","Hardin","Illinois"
-"17077","Jackson","Illinois"
-"17081","Jefferson","Illinois"
-"17083","Jersey","Illinois"
-"17087","Johnson","Illinois"
-"17115","Macon","Illinois"
-"17117","Macoupin","Illinois"
-"17119","Madison","Illinois"
-"17121","Marion","Illinois"
-"17127","Massac","Illinois"
-"17133","Monroe","Illinois"
-"17135","Montgomery","Illinois"
-"17137","Morgan","Illinois"
-"17145","Perry","Illinois"
-"17149","Pike","Illinois"
-"17151","Pope","Illinois"
-"17153","Pulaski","Illinois"
-"17157","Randolph","Illinois"
-"17163","St. Clair","Illinois"
-"17165","Saline","Illinois"
-"17167","Sangamon","Illinois"
-"17171","Scott","Illinois"
-"17173","Shelby","Illinois"
-"17181","Union","Illinois"
-"17189","Washington","Illinois"
-"17191","Wayne","Illinois"
-"17193","White","Illinois"
-"17199","Williamson","Illinois"
-"29007","Audrain","Missouri"
-"29017","Bollinger","Missouri"
-"29019","Boone","Missouri"
-"29023","Butler","Missouri"
-"29027","Callaway","Missouri"
-"29031","Cape Girardeau","Missouri"
-"29035","Carter","Missouri"
-"29051","Cole","Missouri"
-"29055","Crawford","Missouri"
-"29065","Dent","Missouri"
-"29069","Dunklin","Missouri"
-"29071","Franklin","Missouri"
-"29073","Gasconade","Missouri"
-"29089","Howard","Missouri"
-"29093","Iron","Missouri"
-"29099","Jefferson","Missouri"
-"29113","Lincoln","Missouri"
-"29123","Madison","Missouri"
-"29125","Maries","Missouri"
-"29127","Marion","Missouri"
-"29133","Mississippi","Missouri"
-"29139","Montgomery","Missouri"
-"29143","New Madrid","Missouri"
-"29151","Osage","Missouri"
-"29155","Pemiscot","Missouri"
-"29157","Perry","Missouri"
-"29161","Phelps","Missouri"
-"29163","Pike","Missouri"
-"29173","Ralls","Missouri"
-"29179","Reynolds","Missouri"
-"29181","Ripley","Missouri"
-"29183","St. Charles","Missouri"
-"29186","Ste. Genevieve","Missouri"
-"29187","St. Francois","Missouri"
-"29189","St. Louis County","Missouri"
-"29201","Scott","Missouri"
-"29207","Stoddard","Missouri"
-"29219","Warren","Missouri"
-"29221","Washington","Missouri"
-"29223","Wayne","Missouri"
-"29510","St. Louis City","Missouri"
+FIPS,County,State,caShort
+17001,Adams,Illinois,wash_u
+17003,Alexander,Illinois,wash_u
+17005,Bond,Illinois,wash_u
+17013,Calhoun,Illinois,wash_u
+17021,Christian,Illinois,wash_u
+17025,Clay,Illinois,wash_u
+17027,Clinton,Illinois,wash_u
+17047,Edwards,Illinois,wash_u
+17049,Effingham,Illinois,wash_u
+17051,Fayette,Illinois,wash_u
+17055,Franklin,Illinois,wash_u
+17059,Gallatin,Illinois,wash_u
+17061,Greene,Illinois,wash_u
+17065,Hamilton,Illinois,wash_u
+17069,Hardin,Illinois,wash_u
+17077,Jackson,Illinois,wash_u
+17081,Jefferson,Illinois,wash_u
+17083,Jersey,Illinois,wash_u
+17087,Johnson,Illinois,wash_u
+17115,Macon,Illinois,wash_u
+17117,Macoupin,Illinois,wash_u
+17119,Madison,Illinois,wash_u
+17121,Marion,Illinois,wash_u
+17127,Massac,Illinois,wash_u
+17133,Monroe,Illinois,wash_u
+17135,Montgomery,Illinois,wash_u
+17137,Morgan,Illinois,wash_u
+17145,Perry,Illinois,wash_u
+17149,Pike,Illinois,wash_u
+17151,Pope,Illinois,wash_u
+17153,Pulaski,Illinois,wash_u
+17157,Randolph,Illinois,wash_u
+17163,St. Clair,Illinois,wash_u
+17165,Saline,Illinois,wash_u
+17167,Sangamon,Illinois,wash_u
+17171,Scott,Illinois,wash_u
+17173,Shelby,Illinois,wash_u
+17181,Union,Illinois,wash_u
+17189,Washington,Illinois,wash_u
+17191,Wayne,Illinois,wash_u
+17193,White,Illinois,wash_u
+17199,Williamson,Illinois,wash_u
+29007,Audrain,Missouri,wash_u
+29017,Bollinger,Missouri,wash_u
+29019,Boone,Missouri,wash_u
+29023,Butler,Missouri,wash_u
+29027,Callaway,Missouri,wash_u
+29031,Cape Girardeau,Missouri,wash_u
+29035,Carter,Missouri,wash_u
+29051,Cole,Missouri,wash_u
+29055,Crawford,Missouri,wash_u
+29065,Dent,Missouri,wash_u
+29069,Dunklin,Missouri,wash_u
+29071,Franklin,Missouri,wash_u
+29073,Gasconade,Missouri,wash_u
+29093,Iron,Missouri,wash_u
+29099,Jefferson,Missouri,wash_u
+29113,Lincoln,Missouri,wash_u
+29123,Madison,Missouri,wash_u
+29125,Maries,Missouri,wash_u
+29127,Marion,Missouri,wash_u
+29133,Mississippi,Missouri,wash_u
+29139,Montgomery,Missouri,wash_u
+29143,New Madrid,Missouri,wash_u
+29151,Osage,Missouri,wash_u
+29155,Pemiscot,Missouri,wash_u
+29157,Perry,Missouri,wash_u
+29161,Phelps,Missouri,wash_u
+29163,Pike,Missouri,wash_u
+29173,Ralls,Missouri,wash_u
+29179,Reynolds,Missouri,wash_u
+29181,Ripley,Missouri,wash_u
+29183,St. Charles,Missouri,wash_u
+29186,Ste. Genevieve,Missouri,wash_u
+29187,St. Francois,Missouri,wash_u
+29189,St. Louis County,Missouri,wash_u
+29201,Scott,Missouri,wash_u
+29207,Stoddard,Missouri,wash_u
+29219,Warren,Missouri,wash_u
+29221,Washington,Missouri,wash_u
+29223,Wayne,Missouri,wash_u
+29510,St. Louis City,Missouri,wash_u

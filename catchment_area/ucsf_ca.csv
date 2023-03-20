@@ -1,27 +1,26 @@
-"FIPS","County","State"
-"06001","Alameda","California"
-"06007","Butte","California"
-"06009","Calaveras","California"
-"06011","Colusa","California"
-"06013","Contra Costa","California"
-"06019","Fresno","California"
-"06021","Glenn","California"
-"06033","Lake","California"
-"06039","Madera","California"
-"06041","Marin","California"
-"06045","Mendocino","California"
-"06047","Merced","California"
-"06053","Monterey","California"
-"06055","Napa","California"
-"06067","Sacramento","California"
-"06069","San Benito","California"
-"06075","San Francisco","California"
-"06077","San Joaquin","California"
-"06081","San Mateo","California"
-"06085","Santa Clara","California"
-"06087","Santa Cruz","California"
-"06095","Solano","California"
-"06097","Sonoma","California"
-"06099","Stanislaus","California"
-"06101","Sutter","California"
-"06113","Yolo","California"
+FIPS,County,State,caShort
+6001,Alameda,California,ucsf
+6007,Butte,California,ucsf
+6011,Colusa,California,ucsf
+6013,Contra Costa,California,ucsf
+6019,Fresno,California,ucsf
+6021,Glenn,California,ucsf
+6033,Lake,California,ucsf
+6039,Madera,California,ucsf
+6041,Marin,California,ucsf
+6045,Mendocino,California,ucsf
+6047,Merced,California,ucsf
+6053,Monterey,California,ucsf
+6055,Napa,California,ucsf
+6067,Sacramento,California,ucsf
+6069,San Benito,California,ucsf
+6075,San Francisco,California,ucsf
+6077,San Joaquin,California,ucsf
+6081,San Mateo,California,ucsf
+6085,Santa Clara,California,ucsf
+6087,Santa Cruz,California,ucsf
+6095,Solano,California,ucsf
+6097,Sonoma,California,ucsf
+6099,Stanislaus,California,ucsf
+6101,Sutter,California,ucsf
+6113,Yolo,California,ucsf

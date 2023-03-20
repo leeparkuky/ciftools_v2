@@ -1,63 +1,31 @@
-"FIPS","County","State"
-"37003","Alexander","North Carolina"
-"37005","Alleghany","North Carolina"
-"37009","Ashe","North Carolina"
-"37011","Avery","North Carolina"
-"37021","Buncombe","North Carolina"
-"37023","Burke","North Carolina"
-"37027","Caldwell","North Carolina"
-"37035","Catawba","North Carolina"
-"37039","Cherokee","North Carolina"
-"37043","Clay","North Carolina"
-"37045","Cleveland","North Carolina"
-"37057","Davidson","North Carolina"
-"37059","Davie","North Carolina"
-"37067","Forsyth","North Carolina"
-"37075","Graham","North Carolina"
-"37081","Guilford","North Carolina"
-"37087","Haywood","North Carolina"
-"37089","Henderson","North Carolina"
-"37097","Iredell","North Carolina"
-"37099","Jackson","North Carolina"
-"37109","Lincoln","North Carolina"
-"37111","McDowell","North Carolina"
-"37113","Macon","North Carolina"
-"37115","Madison","North Carolina"
-"37121","Mitchell","North Carolina"
-"37149","Polk","North Carolina"
-"37151","Randolph","North Carolina"
-"37157","Rockingham","North Carolina"
-"37159","Rowan","North Carolina"
-"37161","Rutherford","North Carolina"
-"37169","Stokes","North Carolina"
-"37171","Surry","North Carolina"
-"37173","Swain","North Carolina"
-"37175","Transylvania","North Carolina"
-"37189","Watauga","North Carolina"
-"37193","Wilkes","North Carolina"
-"37197","Yadkin","North Carolina"
-"37199","Yancey","North Carolina"
-"51021","Bland","Virginia"
-"51027","Buchanan","Virginia"
-"51035","Carroll","Virginia"
-"51063","Floyd","Virginia"
-"51071","Giles","Virginia"
-"51077","Grayson","Virginia"
-"51089","Henry","Virginia"
-"51121","Montgomery","Virginia"
-"51141","Patrick","Virginia"
-"51143","Pittsylvania","Virginia"
-"51155","Pulaski","Virginia"
-"51167","Russell","Virginia"
-"51173","Smyth","Virginia"
-"51185","Tazewell","Virginia"
-"51191","Washington","Virginia"
-"51197","Wythe","Virginia"
-"51590","Danville","Virginia"
-"51640","Galax","Virginia"
-"51690","Martinsville","Virginia"
-"51750","Radford","Virginia"
-"54047","McDowell","West Virginia"
-"54055","Mercer","West Virginia"
-"54063","Monroe","West Virginia"
-"54109","Wyoming","West Virginia"
+FIPS,County,State,caShort
+37161,Rutherford,North Carolina,wake
+37035,Catawba,North Carolina,wake
+37045,Cleveland,North Carolina,wake
+37109,Lincoln,North Carolina,wake
+37023,Burke,North Carolina,wake
+37027,Caldwell,North Carolina,wake
+37189,Watauga,North Carolina,wake
+37071,Gaston,North Carolina,wake
+37119,Mecklenburg,North Carolina,wake
+37179,Union,North Carolina,wake
+37007,Anson,North Carolina,wake
+37025,Cabarrus,North Carolina,wake
+37159,Rowan,North Carolina,wake
+37167,Stanly,North Carolina,wake
+37151,Randolph,North Carolina,wake
+37003,Alexander,North Carolina,wake
+37097,Iredell,North Carolina,wake
+37171,Surry,North Carolina,wake
+37193,Wilkes,North Carolina,wake
+37197,Yadkin,North Carolina,wake
+37057,Davidson,North Carolina,wake
+37059,Davie,North Carolina,wake
+37067,Forsyth,North Carolina,wake
+37169,Stokes,North Carolina,wake
+37081,Guilford,North Carolina,wake
+37157,Rockingham,North Carolina,wake
+45023,Chester,South Carolina,wake
+45057,Lancaster,South Carolina,wake
+45025,Chesterfield,South Carolina,wake
+45091,York,South Carolina,wake

@@ -1,10 +1,9 @@
-"FIPS","County","State"
-"09001","Fairfield","Connecticut"
-"34003","Bergen","New Jersey"
-"36005","Bronx","New York"
-"36047","Kings","New York"
-"36061","New York","New York"
-"36081","Queens","New York"
-"36085","Richmond","New York"
-"36087","Rockland","New York"
-"36119","Westchester","New York"
+FIPS,County,State,caShort
+34003,Bergen,New Jersey,columbia
+36005,Bronx,New York,columbia
+36047,Kings,New York,columbia
+36061,New York,New York,columbia
+36081,Queens,New York,columbia
+36085,Richmond,New York,columbia
+36087,Rockland,New York,columbia
+36119,Westchester,New York,columbia
