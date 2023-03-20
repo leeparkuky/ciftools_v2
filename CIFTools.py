@@ -442,7 +442,7 @@ class acs_sdoh:
             df['Total'] = df[group_id + "_001E"].astype(int)
             for key, val in age_group_dict.items():
                 col = [x for x in config.variables if config.variables.index(x) in val]
-                df[key] = df.loc[:, col].astype(int).apply(np.sum, axis = 1)
+                df[key] = df.loc[:, col].astype(int).apply(np.sum, axis = 1)/df['Total']
             df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
             return df
         self.add_function(transform_df, 'demographic_age')
