@@ -952,7 +952,7 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
                 datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
             else:
                 result = pd.concat(datasets, axis = 0).reset_index(drop = True)
-            return result
+                return result
         
 def nppes(location:Union[str, List[str]], taxonomy:List[str] = ['Gastroenterology','colon','obstetrics']) -> pd.DataFrame:
     if isinstance(location, str):
