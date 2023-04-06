@@ -660,18 +660,19 @@ def toxRel_data(location:Union[str, List[str]]):
     
 def gen_single_superfund(location: str):
     assert len(location) == 2; assert location.isalpha()
-    url = f'https://data.epa.gov/efservice/SEMS_ACTIVE_SITES/SITE_STATE/{location}/JSON'
-    sf = pd.read_json(url, dtype = {'SITE_FIPS_CODE':str, 'SITE_ZIP_CODE':str})
-    sf.SITE_FIPS_CODE = sf.SITE_FIPS_CODE.apply(lambda x: x[:5])
-    sf.SITE_ZIP_CODE = sf.SITE_ZIP_CODE.apply(lambda x: x[:5])
-    sf2 = sf.loc[sf.NPL.isin(['Currently on the Final NPL', 'Deleted from the Final NPL'])]
-    sf3 = sf2[['SITE_NAME', 'SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_STATE', 'SITE_ZIP_CODE',
-             'SITE_FIPS_CODE', 'NPL', 'LATITUDE', 'LONGITUDE']]
-    sf3 = sf3.assign(Address = sf3['SITE_STRT_ADRS1'] + ', ' + sf3['SITE_CITY_NAME'] + ', ' + sf3['SITE_STATE'] + ' ' + sf3['SITE_ZIP_CODE'].astype(str))
-    sf3 = sf3.rename(columns = {'SITE_NAME':'Name', 'SITE_FIPS_CODE':'FIPS', 'NPL':'Notes',
-                              'LATITUDE':'latitude', 'LONGITUDE':'longitude',
-                               'SITE_STATE':'State'})
-    sf3.drop(['SITE_STRT_ADRS1', 'SITE_CITY_NAME', 'SITE_ZIP_CODE'], axis=1, inplace=True)
+    url = f'https://data.epa.gov/efservice/ENVIROFACTS_SITE/FK_REF_STATE_CODE/{location}/JSON'
+    sf = pd.read_json(url)
+    sf.fips_code = sf.fips_code.apply(lambda x: str(x)[:5])
+    sf.zip_code = sf.zip_code.apply(lambda x: str(x)[:5])
+    sf2 = sf.loc[sf.npl_status_name.isin(['Currently on the Final NPL', 'Deleted from the Final NPL',
+                                          'Site is Part of NPL Site'])]
+    sf3 = sf2[['name', 'street_addr_txt', 'city_name', 'fk_ref_state_code', 'zip_code',
+             'fips_code', 'npl_status_name', 'primary_latitude_decimal_val', 'primary_longitude_decimal_val']]
+    sf3 = sf3.assign(Address = sf3['street_addr_txt'] + ', ' + sf3['city_name'] + ', ' + sf3['fk_ref_state_code'] + ' ' + sf3['zip_code'].astype(str))
+    sf3 = sf3.rename(columns = {'name':'Name', 'fips_code':'FIPS', 'npl_status_name':'Notes',
+                              'primary_latitude_decimal_val':'latitude', 'primary_longitude_decimal_val':'longitude',
+                               'fk_ref_state_code':'State'})
+    sf3.drop(['street_addr_txt', 'city_name', 'zip_code'], axis=1, inplace=True)
     sf3['Type'] = 'Superfund Site'
     sf3['Phone_number'] = None
     
@@ -823,7 +824,7 @@ def download_fqhc_data(location: Union[str, List[str]]):
             size = file.write(data)
             bar.update(size)
             
-    with open(fname, newline='') as csvfile:
+    with open(fname, newline='', encoding='utf8') as csvfile:
         reader = DictReader(csvfile)
         colnames = ['Health_Center_Type', 'Site_Name','Site_Address','Site_City','Site_State_Abbreviation',
                  'Site_Postal_Code','Site_Telephone_Number', 
@@ -2021,10 +2022,3 @@ if __name__ == '__main__':
     with open(file_path, 'wb') as dataset:
         pickle.dump(sdoh_by_query_level, dataset, protocol=pickle.HIGHEST_PROTOCOL)
     print(f'dataset is stored at {file_path}')
-
-    
-    
-    
-    
-    
-    

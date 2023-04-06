@@ -14,9 +14,9 @@ from datetime import datetime as dt
 import shutil
 from functools import partial
 from typing import Union, List
-from tqdm import tqdm
 
-multi_processing = True
+
+multi_processing = False
 
 
 
@@ -81,8 +81,8 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
             cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
     cdata['county_shape'].to_file(ca_name + '_county_shape')
     cdata['tract_shape'].to_file(ca_name + '_tract_shape')
-    cdata['cancer_incidence'].to_csv(ca_name + '_cancer_incidence_county_' + today + '.csv', encoding='utf-8', index=True)
-    cdata['cancer_mortality'].to_csv(ca_name + '_cancer_mortality_county_' + today + '.csv', encoding='utf-8', index=True)
+    cdata['cancer_incidence'].to_csv(ca_name + '_cancer_incidence_county_' + today + '.csv', encoding='utf-8', index=False)
+    cdata['cancer_mortality'].to_csv(ca_name + '_cancer_mortality_county_' + today + '.csv', encoding='utf-8', index=False)
     cdata['cancer_incidence_long'].to_csv(ca_name + '_cancer_incidence_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['cancer_mortality_long'].to_csv(ca_name + '_cancer_mortality_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['economy_county'].to_csv(ca_name + '_economy_county_' + today + '.csv', encoding='utf-8', index=False)
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     "catchment_area_name": "all", # the name of the catchment area name
     "ca_file_path": "all_catchment_areas.csv",
     "query_level" : ['county','tract'],
-    "acs_year"    : 2019,
+    "acs_year"    : 2021,
     "download_file_type": ['pickle'],
     "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
     "generate_zip_file" : False,
