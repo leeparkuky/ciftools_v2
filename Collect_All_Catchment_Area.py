@@ -16,7 +16,7 @@ from functools import partial
 from typing import Union, List
 from tqdm import tqdm
 
-multi_processing = False
+multi_processing = True
 
 
 

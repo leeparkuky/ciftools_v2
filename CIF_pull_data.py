@@ -30,8 +30,14 @@ def open_ca_file(ca_file_path):
 
 def select_area_for_catchment_area_full(df, query_level, ca):
     if hasattr(df, 'County'):
-        if df.County[0][-6:].lower() != 'county':
-            df['County'] = df.County + ' County'
+
+        if not df.County.str.contains('\sCounty$').sum():
+            if df.County.str.contains('\sParish$').mean() > .9:
+                pass
+            else:
+                df['County'] = df.County + ' County'
+        # if df.County[0][-6:].lower() != 'county': < --- Wrong way!
+        #     df['County'] = df.County + ' County'
     
     if query_level == 'county':
         return df.loc[df.FIPS.isin(ca.FIPS), :].reset_index(drop = True)
