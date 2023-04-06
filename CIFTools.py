@@ -1511,7 +1511,7 @@ class scp_cancer_data:
             for row in resp.iter_lines(decode_unicode = True): # go through response
                 if row[:6] == 'County':
                     flag = True
-                    row = row.replace(', ',',').replace(' ,','')
+                    row = row.replace(', ',',').replace(' ,','').replace(' ','')
                 elif flag & (row== ''):
                     flag = False
                 if flag:
@@ -1636,7 +1636,7 @@ class scp_cancer_data:
             for row in resp.iter_lines(decode_unicode = True): # go through response
                 if row[:6] == 'County':
                     flag = True
-                    row = row.replace(', ',',').replace(' ,','')
+                    row = row.replace(', ',',').replace(' ,','').replace(' ','')
                 elif flag & (row== ''):
                     flag = False
                 if flag:
