@@ -1,5 +1,5 @@
 # python packages
-
+import logging
 from dataclasses import dataclass
 from typing import Union, List
 import requests
@@ -72,7 +72,7 @@ async def donwload_for_batch(config, table: str, key: str, session: ClientSessio
         elif config.query_level == 'zip':
             acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=zip%20code%20tabulation%20area:*&in=state:{config.state_fips}&key={key}'
         elif config.query_level == 'puma':
-            acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for==public%20use%20microdata%20area:*&in=state:{config.state_fips}&key={key}'
+            acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=public%20use%20microdata%20area:*&in=state:{config.state_fips}&key={key}'
         else:
             raise ValueError('The region level is not found in the system; select among state, county, county subdivision, tract, block, zip and puma')
     elif isinstance(config.state_fips, list):
@@ -91,7 +91,7 @@ async def donwload_for_batch(config, table: str, key: str, session: ClientSessio
         elif config.query_level == 'zip':
             acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=zip%20code%20tabulation%20area:*&in=state:{states}&key={key}'
         elif config.query_level == 'puma':
-            acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for==public%20use%20microdata%20area:*&in=state:{states}&key={key}'
+            acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=public%20use%20microdata%20area:*&in=state:{states}&key={key}'
         else:
             raise ValueError('The region level is not found in the system; select among state, county, county subdivision, tract, block, zip and puma')
     resp = await session.request(method="GET", url=acs_url)
@@ -132,8 +132,13 @@ def acs_data(key, config = None, **kwargs):
                 df = pd.DataFrame(res[1:], columns = res[0])
             else:
                 df_1 = pd.DataFrame(res[1:], columns = res[0])
-                df = df.merge(df_1, how = 'inner', on = df.columns[df.columns.str.isalpha()].tolist())
+                merge_columns = df.columns[df.columns.str.isalpha()].tolist()
+                if config.query_level == 'puma':
+                    merge_columns += ['public use microdata area']
+                df = df.merge(df_1, how = 'inner', on = merge_columns)
     df = pd.concat([df.loc[:, df.columns.str.isalpha()], df.loc[:, ~df.columns.str.isalpha()]], axis = 1)
+    if config.query_level == 'puma':
+        df.rename(columns = {'public use microdata area': "PUMA"}, inplace = True)
     return df
 
 
@@ -206,10 +211,22 @@ class acs_sdoh:
             state_name = df.state.apply(lambda x: states[x])
             columns = pd.DataFrame(zip(zip_name, state_name), columns = ['ZCTA5','State'])
             
-        geo_name = ['county subdivision','tract','block', 'county', 'zip', 'state']
+        elif level == 'puma':
+            states = {x:stateDf.loc[stateDf.FIPS2.eq(str(x)),'State'].values[0] for x in df.state.unique()}
+            state_name = df.state.apply(lambda x: states[x])
+            puma_name = df.NAME.apply(lambda x: x.split(',')[0])
+            puma_id = df.PUMA.tolist()
+            columns = pd.DataFrame(zip(puma_id, puma_name, state_name), columns = ['PUMA_ID','PUMA_NAME','State'])
+            
+        geo_name = ['county subdivision','tract','block', 'county', 'zip', 'state', 'PUMA']
         df = df.drop(df.columns[df.columns.isin(geo_name)].tolist() + ['NAME'], axis = 1)
         df = pd.concat([columns, df], axis = 1)
-        df = df.sort_values('FIPS').reset_index(drop = True)
+        if level in ['county subdivision','tract','block', 'county']:
+            df = df.sort_values('FIPS').reset_index(drop = True)
+        elif level == 'zip':
+            df = df.sort_values('ZCTA5').reset_index(drop = True)
+        elif level == 'puma':
+            df = df.sort_values(['State','PUMA_ID']).reset_index(drop = True)
         return df
         
             
@@ -1835,7 +1852,7 @@ if __name__ == '__main__':
     parser.add_argument('--state_fips', nargs = '+', type = int, required = False, default = None)
     parser.add_argument('--census_api_key', required = True)
     parser.add_argument('--query_level', nargs = '+', required = True, 
-                        choices = ['county subdivision','tract','block', 'county', 'state','zip'])
+                        choices = ['county subdivision','tract','block', 'county', 'state','zip','puma'])
     parser.add_argument('--year', required = True, type = int)
     # argument for SocrataConfig
     parser.add_argument('--socrata_user_name', required = False, default = None)
@@ -1864,8 +1881,8 @@ if __name__ == '__main__':
         
         
     ####### query level can be multiple
-   
-    sdoh_by_query_level = {}
+    from collections import defaultdict
+    sdoh_by_query_level = defaultdict(dict)
 
     # Setting tqdm bar
     pbar = tqdm(range(5), desc = "collecting acs data", leave = False)
@@ -1886,9 +1903,7 @@ if __name__ == '__main__':
     # cancer data
     for level in args.query_level:
         if level not in ['county','tract']:
-            import warnings 
-            warnings.warn("cancer data is only avaialbe at county or tract level")
-            break
+            logging.warning("Cancer incidence/mortality data and other datasets are in either county or tract level")
     cancer = scp_cancer_data(state_fips)
     sdoh_by_query_level['cancer'] = cancer.cancer_data 
         

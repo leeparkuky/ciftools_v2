@@ -173,11 +173,11 @@ def write_bash_script(bash_file_name: str,
     
     
     if isinstance(query_level, str):
-        assert query_level in ['county subdivision','tract','block', 'county', 'state','zip']
+        assert query_level in ['county subdivision','tract','block', 'county', 'state','zip','puma']
         query_level = f'"{query_level}"'
     else:
         for level in query_level:
-            assert level in ['county subdivision','tract','block', 'county', 'state','zip']
+            assert level in ['county subdivision','tract','block', 'county', 'state','zip', 'puma']
         query_level = ' '.join(f'"{x}"' for x in query_level)
         
         

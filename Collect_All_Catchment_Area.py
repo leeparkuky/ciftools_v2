@@ -132,7 +132,7 @@ if __name__ == '__main__':
     "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
     "catchment_area_name": "all", # the name of the catchment area name
     "ca_file_path": "all_catchment_areas.csv",
-    "query_level" : ['county','tract'],
+    "query_level" : ['county','tract', 'puma'],
     "acs_year"    : 2021,
     "download_file_type": ['pickle'],
     "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
@@ -167,6 +167,6 @@ if __name__ == '__main__':
     else:
         for abb in tqdm(ca.name_short.unique().tolist()):
             gen_zip_file_partial(abb)
-    os.remove('cif_raw_data.pickle');
-    os.remove('all_catchment_areas.sh')
+#     os.remove('cif_raw_data.pickle');
+#     os.remove('all_catchment_areas.sh')
     
