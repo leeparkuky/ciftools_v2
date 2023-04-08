@@ -71,8 +71,10 @@ async def donwload_for_batch(config, table: str, key: str, session: ClientSessio
             acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=block%20group:*&in=state:{config.state_fips}&in=county:*&in=tract:*&key={key}'
         elif config.query_level == 'zip':
             acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=zip%20code%20tabulation%20area:*&in=state:{config.state_fips}&key={key}'
+        elif config.query_level == 'puma':
+            acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for==public%20use%20microdata%20area:*&in=state:{config.state_fips}&key={key}'
         else:
-            print('The region level is not found in the system')
+            raise ValueError('The region level is not found in the system; select among state, county, county subdivision, tract, block, zip and puma')
     elif isinstance(config.state_fips, list):
         config.state_fips = [str(x) for x in config.state_fips]
         states = ','.join(config.state_fips)
@@ -88,11 +90,10 @@ async def donwload_for_batch(config, table: str, key: str, session: ClientSessio
             acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=block%20group:*&in=state:{states}&in=county:*&in=tract:*&key={key}'
         elif config.query_level == 'zip':
             acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for=zip%20code%20tabulation%20area:*&in=state:{states}&key={key}'
+        elif config.query_level == 'puma':
+            acs_url = f'https://api.census.gov/data/{config.year}/{source}?get=NAME,{table}&for==public%20use%20microdata%20area:*&in=state:{states}&key={key}'
         else:
-            print('The region level is not found in the system')
-
-        
-        
+            raise ValueError('The region level is not found in the system; select among state, county, county subdivision, tract, block, zip and puma')
     resp = await session.request(method="GET", url=acs_url)
     resp.raise_for_status()    
     json_raw =  await resp.json()
