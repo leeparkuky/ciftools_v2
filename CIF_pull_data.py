@@ -284,8 +284,10 @@ if __name__ == '__main__':
     rfs_tract = select_area_for_catchment_area(data_dictionary['tract']['risk_and_screening'], 'tract')    
     rfs_county_l = pd.melt(rfs_county, id_vars=['FIPS', 'County', 'State'], 
                          var_name='measure', value_name='value')
+    rfs_county_l['value'] = pd.to_numeric(rfs_county_l['value'])/100
     rfs_tract_l = pd.melt(rfs_tract, id_vars=['FIPS', 'County', 'State'], 
                          var_name='measure', value_name='value')
+    rfs_tract_l['value'] = pd.to_numeric(rfs_tract_l['value'])/100
 
     
     #### cancer data
@@ -414,7 +416,3 @@ if __name__ == '__main__':
         pbar.update(1)
         
     pbar.set_description("check the saved data file(s)")
-
-        
-        
-    

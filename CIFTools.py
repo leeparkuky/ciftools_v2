@@ -1174,7 +1174,9 @@ class BLS:
             df['FIPS'] = df['State']+df['County']
             df['Period'] = df.Period.str.strip()
             if self.most_recent:
-                df = df.loc[df.Period.str.match(re.compile('.*p\)$'))]
+                # df = df.loc[df.Period.str.match(re.compile('.*p\)$'))]
+                p = df.iloc[1,4]
+                df = df.loc[df.Period == p]
                 df['Period'] = [x[:-3] for x in df.Period]
             df = df.loc[:,['FIPS','Unemployment Rate', 'Period']].sort_values('FIPS').reset_index(drop = True)
             df[f'Monthly Unemployment Rate ({df.Period.unique()[0]})'] = df['Unemployment Rate']*0.01
