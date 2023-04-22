@@ -1907,7 +1907,7 @@ if __name__ == '__main__':
     for level in args.query_level:
         if level not in ['county','tract']:
             import warnings 
-            warnings.warn("cancer data is only avaialbe at county or tract level")
+            warnings.warn("cancer data is only avaialbe at the county level")
             break
     cancer = scp_cancer_data(state_fips)
     sdoh_by_query_level['cancer'] = cancer.cancer_data 

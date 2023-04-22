@@ -28,67 +28,168 @@ def open_ca_file(ca_file_path):
     return ca
 
 
-def select_area_for_catchment_area_full(df, query_level, ca):
-    if hasattr(df, 'County'):
-
-        if not df.County.str.contains('\sCounty$').sum():
-            if df.County.str.contains('\sParish$').mean() > .9:
-                pass
-            else:
-                df['County'] = df.County + ' County'
-        # if df.County[0][-6:].lower() != 'county': < --- Wrong way!
-        #     df['County'] = df.County + ' County'
+class organize_table:
+    def __init__(self, query_level, ca, data_dictionary):
+        self.query_level = query_level
+        self.ca = ca
+        self.data_dictionary = data_dictionary
     
-    if query_level == 'county':
-        return df.loc[df.FIPS.isin(ca.FIPS), :].reset_index(drop = True)
-    elif query_level in ['county subdivision','tract','block']:
-        if hasattr(df, 'FIPS5'):
-            df = df.loc[df.FIPS5.isin(ca.FIPS), :].reset_index(drop = True)
-            df.drop('FIPS5', axis = 1, inplace = True)
-        else:
-            df = df.loc[df.FIPS.str[:5].isin(ca.FIPS), :].reset_index(drop = True)
-        return df
+    def select_area_for_catchment_area(self, df, query_level = None, ca = None):
+        if not query_level:
+            query_level = self.query_level
+        if not ca:
+            ca = self.ca
+        
+        if isinstance(df, str):
+            df = self.data_dictionary[query_level][df]
+            
+        if hasattr(df, 'County'):
+            if not df.County.str.contains('\sCounty$').sum():
+                if df.County.str.contains('\sParish$').mean() > .9:
+                    pass
+                else:
+                    df['County'] = df.County + ' County'
+            # if df.County[0][-6:].lower() != 'county': < --- Wrong way!
+            #     df['County'] = df.County + ' County'
 
-def merge_all(*args, query_level = 'county'):
-    if query_level == 'county':
-        geo_col = ['FIPS','County','State']
-    elif query_level == 'tract':
-        geo_col = ['FIPS','Tract','County','State']
-    datasets_to_merge = []
-    datasets_not_to_merge = []
-    columns_to_be_used_later = []
-    for df in args:
-        if all([hasattr(df, col) for col in geo_col]):
-            datasets_to_merge.append(df)
+        if query_level == 'county':
+            return df.loc[df.FIPS.isin(ca.FIPS), :].reset_index(drop = True)
+        elif query_level in ['county subdivision','tract','block']:
+            if hasattr(df, 'FIPS5'):
+                df = df.loc[df.FIPS5.isin(ca.FIPS), :].reset_index(drop = True)
+                df.drop('FIPS5', axis = 1, inplace = True)
+            else:
+                df = df.loc[df.FIPS.str[:5].isin(ca.FIPS), :].reset_index(drop = True)
+            return df
+        elif query_level == 'puma':
+            df = df.loc[df.PUMA_ID.isin(ca.PUMA_ID.tolist()) & df.State.isin(ca.State.tolist()),:].reset_index(drop = True)
+            return df
+
+    def merge_all(self, *args, **kwargs):
+        if 'query_level' in kwargs.keys():
+            query_level = kwargs['query_level']
         else:
-            datasets_not_to_merge.append(df)
-            columns_to_be_used_later.append(pd.Series(geo_col)[[hasattr(df, col) for col in geo_col]].tolist())
-    for i, df in enumerate(datasets_to_merge):
-        if i == 0:
-            for col in geo_col:
-                assert hasattr(df, col)
-            output = df.copy()
-        else:
-            if df.shape[0] > output.shape[0]:
-                if all([ hasattr(df, col) for col in geo_col ]):
-                    output = output.merge(df, how= 'right', on = geo_col)
+            query_level = self.query_level
+            
+        if query_level == 'county':
+            geo_col = ['FIPS','County','State']
+        elif query_level == 'tract':
+            geo_col = ['FIPS','Tract','County','State']
+        elif query_level == 'puma':
+            geo_col = ['PUMA_ID','PUMA_NAME', 'State']
+            
+        datasets_to_merge = []
+        datasets_not_to_merge = []
+        columns_to_be_used_later = []
+        for df in args:
+            if all([hasattr(df, col) for col in geo_col]):
+                datasets_to_merge.append(df)
+            else:
+                datasets_not_to_merge.append(df)
+                columns_to_be_used_later.append(pd.Series(geo_col)[[hasattr(df, col) for col in geo_col]].tolist())
+        for i, df in enumerate(datasets_to_merge):
+            if i == 0:
+                for col in geo_col:
+                    assert hasattr(df, col)
+                output = df.copy()
+            else:
+                if df.shape[0] > output.shape[0]:
+                    if all([ hasattr(df, col) for col in geo_col ]):
+                        output = output.merge(df, how= 'right', on = geo_col)
+                    else:
+                        output = output.merge(df, how = 'left', on = geo_col)
                 else:
                     output = output.merge(df, how = 'left', on = geo_col)
-            else:
-                output = output.merge(df, how = 'left', on = geo_col)
-    if len(datasets_not_to_merge):
-        for df, merge_on_col in zip(datasets_not_to_merge, columns_to_be_used_later):
-            output = output.merge(df, how = 'left', on = merge_on_col)
-    return output
+        if len(datasets_not_to_merge):
+            for df, merge_on_col in zip(datasets_not_to_merge, columns_to_be_used_later):
+                output = output.merge(df, how = 'left', on = merge_on_col)
+        return output
+    
+    def organize_table(self, topic_variables, query_level = None, column_names_dict = None, columns_to_drop = None, data_dictionary = None):
+        if not query_level:
+            query_level = self.query_level
+        if not data_dictionary:
+            data_dictionary = self.data_dictionary
+            
+        topic_dataset = [self.select_area_for_catchment_area(data_dictionary[query_level][topic], query_level) for topic in topic_variables if topic in data_dictionary[query_level].keys()]
+        df = self.merge_all(*topic_dataset, query_level = query_level)
+        if column_names_dict:
+            df = df.rename(columns = colnames)
+        if columns_to_drop:
+            df = df.drop(columns = columns_to_drop, axis = 1)
+        return df 
+    
+    def __call__(self, topic_variables, **kwargs):
+        return self.organize_table(topic_variables, **kwargs)        
 
-def organize_table(topic_variables, query_level, column_names_dict = None, columns_to_drop = None):
-    topic_dataset = [select_area_for_catchment_area(data_dictionary[query_level][topic], query_level) for topic in topic_variables if topic in data_dictionary[query_level].keys()]
-    df = merge_all(*topic_dataset, query_level = query_level)
-    if column_names_dict:
-        df = df.rename(columns = colnames)
-    if columns_to_drop:
-        df = df.drop(columns = columns_to_drop, axis = 1)
-    return df
+
+
+# def select_area_for_catchment_area_full(df, query_level, ca):
+#     if hasattr(df, 'County'):
+
+#         if not df.County.str.contains('\sCounty$').sum():
+#             if df.County.str.contains('\sParish$').mean() > .9:
+#                 pass
+#             else:
+#                 df['County'] = df.County + ' County'
+#         # if df.County[0][-6:].lower() != 'county': < --- Wrong way!
+#         #     df['County'] = df.County + ' County'
+    
+#     if query_level == 'county':
+#         return df.loc[df.FIPS.isin(ca.FIPS), :].reset_index(drop = True)
+#     elif query_level in ['county subdivision','tract','block']:
+#         if hasattr(df, 'FIPS5'):
+#             df = df.loc[df.FIPS5.isin(ca.FIPS), :].reset_index(drop = True)
+#             df.drop('FIPS5', axis = 1, inplace = True)
+#         else:
+#             df = df.loc[df.FIPS.str[:5].isin(ca.FIPS), :].reset_index(drop = True)
+#         return df
+#     elif query_level == 'puma':
+#         df = df.loc[df.PUMA_ID.isin(ca.PUMA_ID.tolist()) & df.State.isin(ca.State.tolist()),:].reset_index(drop = True)
+#         return df
+
+# def merge_all(*args, query_level = 'county'):
+#     if query_level == 'county':
+#         geo_col = ['FIPS','County','State']
+#     elif query_level == 'tract':
+#         geo_col = ['FIPS','Tract','County','State']
+#     elif query_level == 'puma':
+#         geo_col = ['PUMA_ID','PUMA_NAME', 'State']
+#     datasets_to_merge = []
+#     datasets_not_to_merge = []
+#     columns_to_be_used_later = []
+#     for df in args:
+#         if all([hasattr(df, col) for col in geo_col]):
+#             datasets_to_merge.append(df)
+#         else:
+#             datasets_not_to_merge.append(df)
+#             columns_to_be_used_later.append(pd.Series(geo_col)[[hasattr(df, col) for col in geo_col]].tolist())
+#     for i, df in enumerate(datasets_to_merge):
+#         if i == 0:
+#             for col in geo_col:
+#                 assert hasattr(df, col)
+#             output = df.copy()
+#         else:
+#             if df.shape[0] > output.shape[0]:
+#                 if all([ hasattr(df, col) for col in geo_col ]):
+#                     output = output.merge(df, how= 'right', on = geo_col)
+#                 else:
+#                     output = output.merge(df, how = 'left', on = geo_col)
+#             else:
+#                 output = output.merge(df, how = 'left', on = geo_col)
+#     if len(datasets_not_to_merge):
+#         for df, merge_on_col in zip(datasets_not_to_merge, columns_to_be_used_later):
+#             output = output.merge(df, how = 'left', on = merge_on_col)
+#     return output
+
+# def organize_table(topic_variables, query_level, column_names_dict = None, columns_to_drop = None, data_dictionary = None):
+#     topic_dataset = [select_area_for_catchment_area(data_dictionary[query_level][topic], query_level) for topic in topic_variables if topic in data_dictionary[query_level].keys()]
+#     df = merge_all(*topic_dataset, query_level = query_level)
+#     if column_names_dict:
+#         df = df.rename(columns = colnames)
+#     if columns_to_drop:
+#         df = df.drop(columns = columns_to_drop, axis = 1)
+#     return df
 
 
 
@@ -229,6 +330,11 @@ if __name__ == '__main__':
     # --pickle_data_path 'cif_raw_data.pickle'
     # file type of the output
     parser.add_argument('--download_file_type', required = True, nargs = '+', choices = ['csv','pickle','excel'])
+    # NEW FOR PUMA
+    #######
+    parser.add_argument('--add_puma_level', default = False)
+    parser.add_argument('--puma_id_file', required = False) # puma_id_file contains at least the puma_id and state
+#########
 
     args = parser.parse_args()
     
@@ -271,17 +377,36 @@ if __name__ == '__main__':
     years = [2015, 2019, 2021] # tract shape has changed in 2020
     shapes = census_shape(years, states_unique)
     
+#     organize_table = partial(organize_table, data_dictionary = data_dictionary)
+    
+    organize_table_county = organize_table(query_level = 'county', ca = ca, data_dictionary = data_dictionary)
+    organize_table_tract  = organize_table(query_level = 'tract', ca = ca, data_dictionary = data_dictionary)
+    
+    
+    if args.add_puma_level:
+        if args.puma_id_file:
+            puma = pd.read_csv(args.puma_id_file, dtype = {'PUMA_ID':str}) # it will have PUMA_ID and State at least
+        else:
+            from utils import c2p_all
+            puma = c2p_all(ca.FIPS.tolist())
+        organize_table_puma = organize_table(query_level = 'puma', ca = puma, data_dictionary = data_dictionary)
+    else:
+        puma = None
+
+    
     
     # update tqdm
     pbar.update(1)
     pbar.set_description("transforming raw datasets")
 
     #### define select_area_for_catchment_area function
-    select_area_for_catchment_area = partial(select_area_for_catchment_area_full, ca = ca)
+#     select_area_for_catchment_area = partial(select_area_for_catchment_area_full, ca = ca)
 
     #### risk factor
-    rfs_county = select_area_for_catchment_area(data_dictionary['county']['risk_and_screening'], 'county')
-    rfs_tract = select_area_for_catchment_area(data_dictionary['tract']['risk_and_screening'], 'tract')    
+#     rfs_county = select_area_for_catchment_area(data_dictionary['county']['risk_and_screening'], 'county')
+#     rfs_tract = select_area_for_catchment_area(data_dictionary['tract']['risk_and_screening'], 'tract')
+    rfs_county = organize_table_county.select_area_for_catchment_area('risk_and_screening')
+    rfs_tract  = organize_table_tract.select_area_for_catchment_area('risk_and_screening')
     rfs_county_l = pd.melt(rfs_county, id_vars=['FIPS', 'County', 'State'], 
                          var_name='measure', value_name='value')
     rfs_county_l['value'] = pd.to_numeric(rfs_county_l['value'])/100
@@ -292,11 +417,11 @@ if __name__ == '__main__':
     
     #### cancer data
     cancer_inc_l = data_dictionary['cancer']['incidence'].copy()
-    cancer_inc_l = select_area_for_catchment_area(cancer_inc_l, 'county')
+    cancer_inc_l = organize_table_county.select_area_for_catchment_area(cancer_inc_l)
     cancer_inc_l = cancer_inc_l[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']]
     cancer_inc = pd.pivot(cancer_inc_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
     cancer_mor_l = data_dictionary['cancer']['mortality'].copy()
-    cancer_mor_l = select_area_for_catchment_area(cancer_mor_l, 'county')
+    cancer_mor_l = organize_table_county.select_area_for_catchment_area(cancer_mor_l)
     cancer_mor_l = cancer_mor_l[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']]
     cancer_mor = pd.pivot(cancer_mor_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
     
@@ -314,36 +439,61 @@ if __name__ == '__main__':
             'below_poverty' : 'Below Poverty'
             }
     drop_col = ['below_poverty_x.5', 'below_poverty_x2']
-    econ_county = organize_table(econ_topics, 'county', colnames, drop_col)
-    econ_tract  = organize_table(econ_topics, 'tract', colnames, drop_col)
+    kwargs = {"column_names_dict": colnames, "columns_to_drop" : drop_col}
+    econ_county = organize_table_county(econ_topics, **kwargs)
+    econ_tract  = organize_table_tract(econ_topics, **kwargs)
     econ_county['Uninsured'] = 1 - econ_county['Insurance Coverage']
     econ_tract['Uninsured'] = 1 - econ_tract['Insurance Coverage']
     econ_county_l = pd.melt(econ_county, id_vars = ['FIPS', 'County', 'State'], 
                         var_name = 'measure', value_name = 'value')
     econ_tract_l = pd.melt(econ_tract, id_vars = ['FIPS', 'Tract', 'County','State'], 
                             var_name = 'measure', value_name = 'value')
-    
+    if isinstance(puma, pd.DataFrame):
+        econ_puma = organize_table_puma(econ_topics, **kwargs)
+        econ_puma['Uninsured'] = 1 - econ_puma['Insurance Coverage']
+        econ_puma_l = pd.melt(econ_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
+                                var_name = 'measure', value_name = 'value')
+
+
+
     #### ht
     ht_topic = ['vacancy','transportation']
     colnames = {'vacancy_rate': 'Vacancy Rate', 
                 'no_vehicle': 'No Vehicle',
                 'rent_over_40':'Rent Burden (40% Income)'}
     cols_to_drop = ['two_or_more_vehicle','three_or_more_vehicle']
-    ht_county = organize_table(ht_topic, 'county', colnames, cols_to_drop)
-    ht_tract = organize_table(ht_topic, 'tract', colnames, cols_to_drop)
+    kwargs = {"column_names_dict": colnames, "columns_to_drop" : cols_to_drop}
+    ht_county = organize_table_county(ht_topic, **kwargs)
+    ht_tract = organize_table_tract(ht_topic, **kwargs)
     ht_county_l = pd.melt(ht_county, id_vars = ['FIPS', 'County', 'State'], 
                             var_name = 'measure', value_name = 'value')
     ht_tract_l = pd.melt(ht_tract, id_vars = ['FIPS','Tract','County','State'], 
                             var_name = 'measure', value_name = 'value')
+    if isinstance(puma, pd.DataFrame):
+        ht_puma = organize_table_puma(ht_topic, **kwargs)
+        ht_puma_l = pd.melt(ht_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
+                                var_name = 'measure', value_name = 'value')
+    
+    
     
     #### sociodemographic
     socio_topic = ['demographic_age','demographic_race','education','urban_rural']
-    sociodemo_county = organize_table(socio_topic, 'county')
-    sociodemo_tract = organize_table(socio_topic, 'tract')
+    kwargs = {"column_names_dict": colnames,}
+
+    sociodemo_county = organize_table_county(socio_topic, **kwargs)
+    sociodemo_tract = organize_table_tract(socio_topic, **kwargs)
     sd_county_l = pd.melt(sociodemo_county, id_vars = ['FIPS', 'County', 'State'], 
                             var_name = 'measure', value_name = 'value')
     sd_tract_l = pd.melt(sociodemo_tract, id_vars = ['FIPS','Tract','County','State'], 
                             var_name = 'measure', value_name = 'value')
+    
+    if isinstance(puma, pd.DataFrame):
+        sociodemo_puma = organize_table_puma(socio_topic, **kwargs)
+        sd_puma_l = pd.melt(sociodemo_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
+                                var_name = 'measure', value_name = 'value')
+    
+    
+    
     
     #### env
     env_topic = ['water_violation','food_desert']
@@ -351,14 +501,14 @@ if __name__ == '__main__':
     data_dictionary['county']['water_violation'] = data_dictionary['county']['water_violation'].drop('vacancy_rate', axis = 1)
     # food desert tracts are outdated (2010 ver.)
     data_dictionary['tract']['food_desert'].FIPS = data_dictionary['tract']['food_desert'].FIPS.str.zfill(11)
-    data_dictionary['tract']['food_desert'] = select_area_for_catchment_area(data_dictionary['tract']['food_desert'], 'tract')
+    data_dictionary['tract']['food_desert'] = organize_table_tract.select_area_for_catchment_area('food_desert')
     all_counties = data_dictionary['county']['demographic_age'][['FIPS','County','State']]
     county_states = data_dictionary['tract']['food_desert'].FIPS.str[:5].apply(lambda x: all_counties.loc[all_counties.FIPS.eq(x),['County','State']].values.tolist())
     data_dictionary['tract']['food_desert'][['County','State']] = [x[0] for x in county_states.tolist()]
     env_tract = data_dictionary['tract']['food_desert'].merge(shapes['tract_shape'], how = 'left')
     env_tract = env_tract[['FIPS', 'Tract', 'County', 'State', 'LILATracts_Vehicle']].reset_index(drop = True)
 #     data_dictionary['tract']['vacancy'].merge(data_dictionary['tract']['food_desert'], how = 'left').drop(['vacancy_rate'],axis = 1)
-    env_county = organize_table(env_topic, 'county')
+    env_county = organize_table_county(env_topic)
 #     env_tract = organize_table(env_topic, 'tract')
     env_county_l = pd.melt(env_county, id_vars = ['FIPS', 'County', 'State'], 
                             var_name = 'measure', value_name = 'value')
@@ -367,7 +517,7 @@ if __name__ == '__main__':
     
     #### facility
     superfund = data_dictionary['facility']['superfund']
-    superfund = select_area_for_catchment_area(superfund, 'tract') # it has FIPS5
+    superfund = organize_table_tract.select_area_for_catchment_area(superfund) # it has FIPS5
     point_df = pd.concat([data_dictionary['facility']['all'], superfund], axis = 0).sort_values('Type').reset_index(drop = True)
 
     
@@ -386,7 +536,13 @@ if __name__ == '__main__':
                 'environment_tract': env_tract, 'environment_tract_long': env_tract_l,
                  'facilities_and_providers': point_df, 'shapes':shapes}
     
-    
+    #### PUMA
+    if isinstance(puma, pd.DataFrame):
+        cdata_puma = {'economy_puma': econ_puma, 'economy_puma_long': econ_puma_l,
+                      'ht_puma': ht_puma, 'ht_puma_long': ht_puma_l,
+                      'sociodemographics_puma': sociodemo_puma, 'sd_puma_long': sd_puma_l}
+        cdata.update(cdata_puma)
+        
 
     pbar.update(1)
     pbar.set_description("saving datasets")

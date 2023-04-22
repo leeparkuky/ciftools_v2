@@ -155,6 +155,7 @@ def write_bash_script(bash_file_name: str,
                       cif_data_pull = True,
                      generate_zip_file = True,
                      install_packages = False,
+                      puma_ca_file_path: str = None,
                      **kwargs):
     
     
@@ -214,6 +215,14 @@ def write_bash_script(bash_file_name: str,
         output = os.path.join(os.getcwd(), 'cif_raw_data.pickle')
         if cif_data_pull:
             f.write(f'python CIF_pull_data.py --ca_name "$catchment_area_name" --ca_file_path $ca_file_path --pickle_data_path "cif_raw_data.pickle" --download_file_type {download_file_type}')
+            if 'puma' in query_level:
+                f.write(' --add_puma_level true')
+                if isinstance(puma_ca_file_path, str):
+                    f.write(f' --puma_id_file "{puma_ca_file_path}"')
+            else:
+                f.write(' --add_puma_level false')
+
+                    
             f.write('\n\n')
             output = ca_dir
             if generate_zip_file:
@@ -400,3 +409,45 @@ dfCsv = StringIO(state)
 
 stateDf = pd.read_csv(dfCsv, sep=',', dtype={'State':str, 'FIPS2':str, 'StateAbbrev':str})
 stateDf['State'] = stateDf.State.str.strip()
+
+
+def c2p_all(county_FIPS:list = None):
+    old_tract_to_puma = 'https://www2.census.gov/geo/docs/maps-data/data/rel/2010_Census_Tract_to_2010_PUMA.txt'
+    new_tract_to_puma = 'https://www2.census.gov/geo/docs/maps-data/data/rel2020/2020_Census_Tract_to_2020_PUMA.txt'
+    t2p2010 = pd.read_table(old_tract_to_puma, sep = ',', dtype = {'STATEFP': str,
+                                                        'COUNTYFP': str,
+                                                        'TRACTCE':str,
+                                                        'PUMA5CE':str})
+    t2p2010 = t2p2010.rename(columns = {k:v for k,v in zip(t2p2010.columns.tolist(), 
+                                                 ['STATEFIPS','COUNTYFIPS','TRACTFIPS','PUMA_ID'])})
+    t2p2010 = t2p2010.merge(stateDf, how = 'left', left_on = 'STATEFIPS', right_on = 'FIPS2') \
+                    .dropna().drop(['FIPS2'], axis = 1)
+    t2p2010['FIPS'] = t2p2010['STATEFIPS'] + t2p2010['COUNTYFIPS']
+    t2p2010['TRACTFIPS'] = t2p2010['STATEFIPS'] + t2p2010['COUNTYFIPS'] + t2p2010['TRACTFIPS']
+    t2p2010 = t2p2010.drop(['STATEFIPS','COUNTYFIPS'], axis = 1)
+    t2p2020 = pd.read_table(new_tract_to_puma, sep = ',', dtype = {'STATEFP': str,
+                                                        'COUNTYFP': str,
+                                                        'TRACTCE':str,
+                                                        'PUMA5CE':str})
+    t2p2020 = t2p2020.rename(columns = {k:v for k,v in zip(t2p2020.columns.tolist(), 
+                                                 ['STATEFIPS','COUNTYFIPS','TRACTFIPS','PUMA_ID'])})
+    t2p2020 = t2p2020.merge(stateDf, how = 'left', left_on = 'STATEFIPS', right_on = 'FIPS2') \
+                    .dropna().drop(['FIPS2'], axis = 1)
+    t2p2020['FIPS'] = t2p2020['STATEFIPS'] + t2p2020['COUNTYFIPS']
+    t2p2020['TRACTFIPS'] = t2p2020['STATEFIPS'] + t2p2020['COUNTYFIPS'] + t2p2020['TRACTFIPS']
+    t2p2020 = t2p2020.drop(['STATEFIPS','COUNTYFIPS'], axis = 1)
+    t2p_all = pd.DataFrame({'TRACTFIPS':list(set(t2p2020.TRACTFIPS.tolist()+ t2p2010.TRACTFIPS.tolist()))})
+    t2p_all_2020 = t2p_all.merge(t2p2020, how = 'left').dropna()
+    t2p_all_2010 = t2p_all.merge(t2p2010, how = 'left').dropna()
+    t2p_all_2010['Year'] = '2010'; t2p_all_2020['Year'] = '2020'    
+    t2p_all = pd.concat([t2p_all_2010.loc[~t2p_all_2010.TRACTFIPS.isin(t2p_all_2020.TRACTFIPS.tolist()),:], t2p_all_2020])
+    t2p_all = t2p_all.sort_values(['State','PUMA_ID','FIPS','TRACTFIPS']).reset_index(drop = True)
+    c2p_all = t2p_all.drop(['TRACTFIPS', 'Year'], axis = 1)
+    c2p_all = c2p_all.drop_duplicates().sort_values(['State','PUMA_ID','FIPS']).reset_index(drop = True)
+    if county_FIPS:
+        puma = c2p_all.loc[c2p_all.FIPS.isin(county_FIPS),['PUMA_ID','State']].drop_duplicates()
+    else:
+        puma = c2p_all.loc[:,['PUMA_ID','State']].drop_duplicates()
+    return puma.reset_index(drop = True)    
+
+    
