@@ -448,7 +448,7 @@ if __name__ == '__main__':
                         var_name = 'measure', value_name = 'value')
     econ_tract_l = pd.melt(econ_tract, id_vars = ['FIPS', 'Tract', 'County','State'], 
                             var_name = 'measure', value_name = 'value')
-    if isinstance(puma, pd.DataFrame):
+    if puma is not None:
         econ_puma = organize_table_puma(econ_topics, **kwargs)
         econ_puma['Uninsured'] = 1 - econ_puma['Insurance Coverage']
         econ_puma_l = pd.melt(econ_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
@@ -469,7 +469,7 @@ if __name__ == '__main__':
                             var_name = 'measure', value_name = 'value')
     ht_tract_l = pd.melt(ht_tract, id_vars = ['FIPS','Tract','County','State'], 
                             var_name = 'measure', value_name = 'value')
-    if isinstance(puma, pd.DataFrame):
+    if puma is not None:
         ht_puma = organize_table_puma(ht_topic, **kwargs)
         ht_puma_l = pd.melt(ht_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
                                 var_name = 'measure', value_name = 'value')
@@ -487,7 +487,7 @@ if __name__ == '__main__':
     sd_tract_l = pd.melt(sociodemo_tract, id_vars = ['FIPS','Tract','County','State'], 
                             var_name = 'measure', value_name = 'value')
     
-    if isinstance(puma, pd.DataFrame):
+    if puma is not None:
         sociodemo_puma = organize_table_puma(socio_topic, **kwargs)
         sd_puma_l = pd.melt(sociodemo_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
                                 var_name = 'measure', value_name = 'value')
