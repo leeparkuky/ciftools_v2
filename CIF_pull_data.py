@@ -383,7 +383,7 @@ if __name__ == '__main__':
     organize_table_tract  = organize_table(query_level = 'tract', ca = ca, data_dictionary = data_dictionary)
     
     
-    if args.add_puma_level:
+    if args.add_puma_level == 'true':
         if args.puma_id_file:
             puma = pd.read_csv(args.puma_id_file, dtype = {'PUMA_ID':str}) # it will have PUMA_ID and State at least
         else:

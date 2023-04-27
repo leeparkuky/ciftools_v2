@@ -9,3 +9,5 @@ aiofiles
 pandas
 numpy
 geopandas
+openpyxl
+xlrd

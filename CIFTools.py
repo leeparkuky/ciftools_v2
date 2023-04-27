@@ -1326,9 +1326,9 @@ class water_violation:
     def gen_violation(state:str, start_year: int, end_year:int = None):
         url_violation = f'https://data.epa.gov/efservice/VIOLATION/IS_HEALTH_BASED_IND/Y/PRIMACY_AGENCY_CODE/{state}/CSV'
         violation = pd.read_csv(url_violation)
-        violation.columns = violation.columns.str.replace(re.compile('.*\.'),"")
+        violation.columns = violation.columns.str.replace(re.compile('.*\.'),"", regex = True)
         violation = violation.loc[violation.COMPL_PER_BEGIN_DATE.notnull() ,:]
-        violation['date'] = pd.to_datetime(violation.COMPL_PER_BEGIN_DATE)
+        violation['date'] = pd.to_datetime(violation.COMPL_PER_BEGIN_DATE,  format = "%d-%b-%y")
         if end_year:
             violation = violation.loc[(
                 violation.date.dt.year >= start_year) & (
@@ -1347,7 +1347,7 @@ class water_violation:
             profile2 = pd.read_csv(url_systems2)
             profile = pd.concat([profile,profile2]).reset_index(drop=True)
             del profile2
-        profile.columns = profile.columns.str.replace(re.compile('.*\.'),"")
+        profile.columns = profile.columns.str.replace(re.compile('.*\.'),"", regex = True)
         profile = profile.loc[profile['PWS_TYPE_CODE'] == 'CWS']
         profile = profile.assign(COUNTY_SERVED = profile.COUNTY_SERVED.str.split(',')).explode('COUNTY_SERVED')
         return profile
