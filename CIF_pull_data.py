@@ -537,7 +537,7 @@ if __name__ == '__main__':
                  'facilities_and_providers': point_df, 'shapes':shapes}
     
     #### PUMA
-    if isinstance(puma, pd.DataFrame):
+    if puma is not None:
         cdata_puma = {'economy_puma': econ_puma, 'economy_puma_long': econ_puma_l,
                       'ht_puma': ht_puma, 'ht_puma_long': ht_puma_l,
                       'sociodemographics_puma': sociodemo_puma, 'sd_puma_long': sd_puma_l}
