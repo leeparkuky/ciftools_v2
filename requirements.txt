@@ -5,3 +5,7 @@ beautifulsoup4~=4.11.1
 chromedriver_autoinstaller
 selenium~=4.6.0
 sodapy~=2.2.0
+aiofiles
+pandas
+numpy
+geopandas

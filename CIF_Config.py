@@ -65,15 +65,35 @@ class ACSConfig:
             else:
                 self.variables
             label_col = self.var_desc.loc[self.var_desc.name.isin(self.variables),:].sort_values('name').label.reset_index(drop = True)
-            labels  = [x[-2].replace(":",'').replace("Estimate!!","") + 
-                       " - " + 
-                       x[-1].replace(":",'').replace("Estimate!!","") if len(
-                           x) > 2 else x[-1].replace(":",'').replace("Estimate!!","") for x in label_col.str.split(":!!")]
+            
+            def join_labels(seq, num_labels):
+                text = seq[-num_labels].replace(":",'').replace("Estimate!!","") 
+                for i in range(num_labels-1):
+                    text += ' - '
+                    text += seq[-num_labels + i + 1].replace(":",'').replace("Estimate!!","")
+                return text
+            
+            labels  = []
+
+            for x in label_col.str.split(":!!"):
+                if len(x) <= 2:
+                    labels.append(x[-1].replace(":",'').replace("Estimate!!",""))
+                else:
+                    labels.append(join_labels(x, num_labels = len(x)))
+
             self._labels = labels
+
         return self._labels
     
+    @property
+    def var_desc(self):
+        if hasattr(self, '_var_desc'):
+            pass
+        else:
+            self.varaibels
+        return self._var_desc
     
-    
+
     @property
     def variables(self):
         if hasattr(self, "_variables"):
@@ -83,7 +103,7 @@ class ACSConfig:
                 self.find_acs_type()
             res = gen_variable_names(self.year, self.acs_type, self.acs_group)
             self._variables = res[0]
-            self.var_desc = pd.DataFrame(res[1][1:], columns = res[1][0])
-            self.var_desc = self.var_desc.loc[self.var_desc.name.isin(self._variables),:]
+            self._var_desc = pd.DataFrame(res[1][1:], columns = res[1][0])
+            self._var_desc = self.var_desc.loc[self.var_desc.name.isin(self._variables),:].reset_index(drop = True)
                 
         return self._variables

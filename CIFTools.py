@@ -123,9 +123,17 @@ def acs_data(key, config = None, **kwargs):
         result = asyncio.run(download_all(config, key))
     if len(result) == 1:
         df = pd.DataFrame(result[0][1:], columns = result[0][0])
-        data_columns = df.columns[df.columns.str.contains(config.acs_group)].tolist()
-        index_columns = df.columns[~df.columns.str.contains(config.acs_group)].tolist()
-        df = df[index_columns + data_columns]
+        if isinstance(config.acs_group, list):
+            data_columns = []
+            for group in config.acs_group:
+                data_columns += df.columns[df.columns.str.contains(group)].tolist()
+            index_columns = df.columns[~df.columns.isin(data_columns)].tolist()
+        elif isinstance(config.acs_group, str):
+            data_columns = df.columns[df.columns.str.contains(config.acs_group)].tolist()
+            index_columns = df.columns[~df.columns.str.contains(config.acs_group)].tolist()
+        else:
+            raise AttributeError("config.acs_group should be either string or a list")
+        df = df.loc[:, index_columns + data_columns]
     else:
         for i, res in enumerate(result):
             if i == 0:
