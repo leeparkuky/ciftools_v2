@@ -138,7 +138,7 @@ if __name__ == '__main__':
     bash_script_kwargs = {
     "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
     "catchment_area_name": "all", # the name of the catchment area name
-    "ca_file_path": "all_catchment_areas2.csv",
+    "ca_file_path": "all_catchment_areas.csv",
     "query_level" : ['county','tract'],
     "add_puma_level": True,
     "acs_year"    : 2021,
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     
     subprocess.run(["bash", "all_catchment_areas.sh"], shell=True)
 
-    ca_path = glob('*/all_catchment_areas2.csv')[0]
+    ca_path = glob('*/all_catchment_areas.csv')[0]
     ca = pd.read_csv(ca_path, dtype = {"FIPS":str})
     ca['FIPS'] = ca.FIPS.str.zfill(5)
     pickle_path = [x for x in glob('*/all_catchment_data*.pickle') if 'spatial' not in x][0]
