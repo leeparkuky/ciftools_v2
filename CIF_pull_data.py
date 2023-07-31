@@ -16,7 +16,7 @@ def open_pickle_file(data_file_path):
     return data_dictionary
 
 def open_ca_file(ca_file_path):
-# ca_file_path = './uky_ca.csv'
+    # ca_file_path = './catchment_area/umd_ca.csv'
     ca = pd.read_csv(ca_file_path, dtype={'FIPS':str})
     ca['FIPS'] = ca.FIPS.str.zfill(5)
     if all(ca.County.str.contains('.+\sCounty')):
@@ -24,7 +24,14 @@ def open_ca_file(ca_file_path):
     elif all(ca.County.str.contains('.+\sParish')):
         pass
     else:
-        ca['County'] = ca.County + ' County'
+        conditions = [
+            (ca['State'] == 'AK'),
+            (ca['State'] != 'AK')]
+        choices = [ca.County, ca.County + ' County']
+        ca['County'] = np.select(conditions, choices)
+        ca['County']= ca.County.str.replace('Parish County','Parish')
+        ca['County']= ca.County.str.replace('City County','City')
+        # ca['County'] = ca.County + ' County'
     return ca
 
 
@@ -48,7 +55,14 @@ class organize_table:
                 if df.County.str.contains('\sParish$').mean() > .9:
                     pass
                 else:
-                    df['County'] = df.County + ' County'
+                    conditions = [
+                        (df['State'] == 'Alaska'),
+                        (df['State'] != 'Alaska')]
+                    choices = [df.County, df.County + ' County']
+                    df['County'] = np.select(conditions, choices)
+                    df['County']= df.County.str.replace('Parish County','Parish')
+                    df['County']= df.County.str.replace('City County','City')
+                    # df['County'] = df.County + ' County'
             # if df.County[0][-6:].lower() != 'county': < --- Wrong way!
             #     df['County'] = df.County + ' County'
 
@@ -208,6 +222,7 @@ def write_excel_file(cdata, full_path, full_path2):
                   'sociodemographics_tract', 'sd_tract_long', 
                   'environment_county', 'environment_county_long', 
                   'environment_tract', 'environment_tract_long', 
+                  'food_desert_tract', 'food_desert_tract_long', 
                   'facilities_and_providers']
     
     for name in cdata.keys():
@@ -224,6 +239,7 @@ def write_excel_file(cdata, full_path, full_path2):
         cdata['economy_tract'].to_excel(writer, sheet_name = 'Economy (Tract)', index = False)
         cdata['environment_county'].to_excel(writer, sheet_name = 'Environment (County)', index = False)
         cdata['environment_tract'].to_excel(writer, sheet_name = 'Environment (Tract)', index = False)
+        cdata['food_desert_tract'].to_excel(writer, sheet_name = 'Food Desert (Tract)', index = False)
         #cdata['broadband_speeds'].to_excel(writer, sheet_name = 'Broadband Speeds', index = False) #can be too long in some areas
         cdata['ht_county'].to_excel(writer, sheet_name = 'H and T (County)', index = False)
         cdata['ht_tract'].to_excel(writer, sheet_name= 'H and T (Tract)', index = False)
@@ -244,6 +260,7 @@ def write_excel_file(cdata, full_path, full_path2):
         cdata['economy_tract_long'].to_excel(writer, sheet_name = 'Economy (Tract)', index = False)
         cdata['environment_county_long'].to_excel(writer, sheet_name = 'Environment (County)', index = False)
         cdata['environment_tract_long'].to_excel(writer, sheet_name = 'Environment (Tract)', index = False)
+        cdata['food_desert_tract_long'].to_excel(writer, sheet_name = 'Food Desert (Tract)', index = False)
         #cdata['broadband_speeds'].to_excel(writer, sheet_name = 'Broadband Speeds', index = False) # can be too long in some areas
         cdata['ht_county_long'].to_excel(writer, sheet_name = 'H and T (County)', index = False)
         cdata['ht_tract_long'].to_excel(writer, sheet_name= 'H and T (Tract)', index = False)
@@ -269,6 +286,7 @@ def save_as_csvs(cdata, path2):
                   'sociodemographics_tract', 'sd_tract_long', 
                   'environment_county', 'environment_county_long', 
                   'environment_tract', 'environment_tract_long', 
+                  'food_desert_tract', 'food_desert_tract_long', 
                   'facilities_and_providers']
     
     for name in cdata.keys():
@@ -288,6 +306,8 @@ def save_as_csvs(cdata, path2):
     cdata['environment_county_long'].to_csv(ca_name + '_environment_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['environment_tract'].to_csv(ca_name + '_environment_tract_' + today + '.csv', encoding='utf-8', index=False)
     cdata['environment_tract_long'].to_csv(ca_name + '_environment_tract_long_' + today + '.csv', encoding='utf-8', index=False)
+    cdata['food_desert_tract'].to_csv(ca_name + '_food_desert_tract_' + today + '.csv', encoding='utf-8', index=False)
+    cdata['food_desert_tract_long'].to_csv(ca_name + '_food_desert_tract_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['ht_county'].to_csv(ca_name + '_housing_trans_county_' + today + '.csv', encoding='utf-8', index=False)
     cdata['ht_county_long'].to_csv(ca_name + '_housing_trans_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['ht_tract'].to_csv(ca_name + '_housing_trans_tract_' + today + '.csv', encoding='utf-8', index=False)
@@ -402,41 +422,16 @@ if __name__ == '__main__':
     #### define select_area_for_catchment_area function
 #     select_area_for_catchment_area = partial(select_area_for_catchment_area_full, ca = ca)
 
-    #### risk factor
-#     rfs_county = select_area_for_catchment_area(data_dictionary['county']['risk_and_screening'], 'county')
-#     rfs_tract = select_area_for_catchment_area(data_dictionary['tract']['risk_and_screening'], 'tract')
-    rfs_county = organize_table_county.select_area_for_catchment_area('risk_and_screening')
-    rfs_tract  = organize_table_tract.select_area_for_catchment_area('risk_and_screening')
-    rfs_county_l = pd.melt(rfs_county, id_vars=['FIPS', 'County', 'State'], 
-                         var_name='measure', value_name='value')
-    rfs_county_l['value'] = pd.to_numeric(rfs_county_l['value'])/100
-    rfs_tract_l = pd.melt(rfs_tract, id_vars=['FIPS', 'County', 'State'], 
-                         var_name='measure', value_name='value')
-    rfs_tract_l['value'] = pd.to_numeric(rfs_tract_l['value'])/100
-
-    
-    #### cancer data
-    cancer_inc_l = data_dictionary['cancer']['incidence'].copy()
-    cancer_inc_l = organize_table_county.select_area_for_catchment_area(cancer_inc_l)
-    cancer_inc_l = cancer_inc_l[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']]
-    cancer_inc = pd.pivot(cancer_inc_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
-    cancer_mor_l = data_dictionary['cancer']['mortality'].copy()
-    cancer_mor_l = organize_table_county.select_area_for_catchment_area(cancer_mor_l)
-    cancer_mor_l = cancer_mor_l[['FIPS', 'County', 'State', 'Type', 'Site', 'AAR', 'AAC']]
-    cancer_mor = pd.pivot(cancer_mor_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
-    
-    
-    
-    
     #### econ
-    econ_topics = ['insurance','gini_index','income','employment','poverty','bls_unemployment']
-    colnames = {'Labor Force Participation Rate': f'Annual Labor Force Participation Rate (2015-2019)',
-            'Unemployment Rate' : f'Annual Unemployment Rate (2015-2019)',
+    econ_topics = ['insurance','gini_index','income','employment','poverty','bls_unemployment', 'public_assistance']
+    colnames = {'Labor Force Participation Rate': 'Annual Labor Force Participation Rate',
+            'Unemployment Rate' : 'Annual Unemployment Rate',
             'health_insurance_coverage_rate': 'Insurance Coverage',
             'Gini Index': 'Gini Coefficient',
             'median_income_all': 'Household Income',
             'medicaid' : 'Medicaid Enrollment',
-            'below_poverty' : 'Below Poverty'
+            'below_poverty' : 'Below Poverty',
+            'public_assistance_received': 'Received Public Assistance'
             }
     drop_col = ['below_poverty_x.5', 'below_poverty_x2']
     kwargs = {"column_names_dict": colnames, "columns_to_drop" : drop_col}
@@ -457,10 +452,20 @@ if __name__ == '__main__':
 
 
     #### ht
-    ht_topic = ['vacancy','transportation']
+    ht_topic = ['vacancy','transportation', 'single_parent', 'housing', 'internet', 'rent_to_income']
     colnames = {'vacancy_rate': 'Vacancy Rate', 
                 'no_vehicle': 'No Vehicle',
-                'rent_over_40':'Rent Burden (40% Income)'}
+                'rent_over_40':'Rent Burden (40% Income)',
+                'single_parent_house': 'Single Parent Household',
+                'mobile_home': 'Mobile Homes',
+                'multi_unit_house': 'Multi-Unit Structures',
+                'owner_occupied': 'Owner Occupied Housing',
+                'crowding': 'Crowded Housing',
+                'lack_plumbing': 'Lack Complete Plumbing',
+                'no_broadband': 'No Home Broadband',
+                'median_value': 'Median Home Value',
+                'median_mortgage': 'Median Monthly Mortgage',
+                'median_rent': 'Median Gross Rent'}
     cols_to_drop = ['two_or_more_vehicle','three_or_more_vehicle']
     kwargs = {"column_names_dict": colnames, "columns_to_drop" : cols_to_drop}
     ht_county = organize_table_county(ht_topic, **kwargs)
@@ -477,7 +482,7 @@ if __name__ == '__main__':
     
     
     #### sociodemographic
-    socio_topic = ['demographic_age','demographic_race','education','urban_rural']
+    socio_topic = ['demographic_age','demographic_race','education','urban_rural', 'eng_prof']
     kwargs = {"column_names_dict": colnames,}
 
     sociodemo_county = organize_table_county(socio_topic, **kwargs)
@@ -492,25 +497,64 @@ if __name__ == '__main__':
         sd_puma_l = pd.melt(sociodemo_puma, id_vars = ['PUMA_ID', 'PUMA_NAME', 'State'], 
                                 var_name = 'measure', value_name = 'value')
     
+    #### fix county names
+    coFix = sociodemo_county[['FIPS', 'County']]
     
+    
+    #### cancer data
+    cancer_inc_l = data_dictionary['cancer']['incidence'].copy()
+    cancer_inc_l = organize_table_county.select_area_for_catchment_area(cancer_inc_l)
+    cancer_inc_l = coFix.merge(cancer_inc_l[['FIPS', 'State', 'Type', 'Site', 'AAR', 'AAC']], on = 'FIPS', how = 'left')
+    cancer_inc = pd.pivot(cancer_inc_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
+    cancer_mor_l = data_dictionary['cancer']['mortality'].copy()
+    cancer_mor_l = organize_table_county.select_area_for_catchment_area(cancer_mor_l)
+    cancer_mor_l = coFix.merge(cancer_mor_l[['FIPS', 'State', 'Type', 'Site', 'AAR', 'AAC']], on = 'FIPS', how = 'left')
+    cancer_mor = pd.pivot(cancer_mor_l, index=['FIPS', 'County', 'State', 'Type'], columns='Site', values='AAR').reset_index()
+
+    #### risk factor
+    rfs_county = organize_table_county.select_area_for_catchment_area('risk_and_screening')
+    rfs_county.drop(['County'], axis=1, inplace=True)
+    rfs_countyFix = coFix.merge(rfs_county, on = 'FIPS', how = 'left')
+    rfs_county = rfs_countyFix
+    rfs_tract  = organize_table_tract.select_area_for_catchment_area('risk_and_screening')
+    rfs_county_l = pd.melt(rfs_county, id_vars=['FIPS', 'County', 'State'], 
+                         var_name='measure', value_name='value')
+    rfs_county_l['value'] = pd.to_numeric(rfs_county_l['value'])/100
+    rfs_tract_l = pd.melt(rfs_tract, id_vars=['FIPS', 'County', 'State'], 
+                         var_name='measure', value_name='value')
+    rfs_tract_l['value'] = pd.to_numeric(rfs_tract_l['value'])/100    
     
     
     #### env
-    env_topic = ['water_violation','food_desert']
+    env_topic = ['water_violation','food_desert', 'ejscreen']
     data_dictionary['county']['water_violation'] = data_dictionary['county']['vacancy'].merge(data_dictionary['county']['water_violation'], on = ['County','State'], how = 'left').sort_values('FIPS').reset_index(drop = True)
     data_dictionary['county']['water_violation'] = data_dictionary['county']['water_violation'].drop('vacancy_rate', axis = 1)
+    
     # food desert tracts are outdated (2010 ver.)
     data_dictionary['tract']['food_desert'].FIPS = data_dictionary['tract']['food_desert'].FIPS.str.zfill(11)
     data_dictionary['tract']['food_desert'] = organize_table_tract.select_area_for_catchment_area('food_desert')
     all_counties = data_dictionary['county']['demographic_age'][['FIPS','County','State']]
     county_states = data_dictionary['tract']['food_desert'].FIPS.str[:5].apply(lambda x: all_counties.loc[all_counties.FIPS.eq(x),['County','State']].values.tolist())
     data_dictionary['tract']['food_desert'][['County','State']] = [x[0] for x in county_states.tolist()]
-    env_tract = data_dictionary['tract']['food_desert'].merge(shapes['tract_shape'], how = 'left')
-    env_tract = env_tract[['FIPS', 'Tract', 'County', 'State', 'LILATracts_Vehicle']].reset_index(drop = True)
-#     data_dictionary['tract']['vacancy'].merge(data_dictionary['tract']['food_desert'], how = 'left').drop(['vacancy_rate'],axis = 1)
+    fd_tract = data_dictionary['tract']['food_desert'].merge(shapes['tract_shape'], how = 'left')
+    fd_tract = fd_tract[['FIPS', 'Tract', 'County', 'State', 'LILATracts_Vehicle']].reset_index(drop = True)
+    
+    data_dictionary['tract']['ejscreen'].FIPS = data_dictionary['tract']['ejscreen'].FIPS.str.zfill(11)
+    data_dictionary['tract']['ejscreen'] = organize_table_tract.select_area_for_catchment_area('ejscreen')
+    all_tracts = data_dictionary['tract']['demographic_age'][['FIPS', 'Tract', 'County','State']]
+    tracts_states = data_dictionary['tract']['ejscreen'].FIPS.str[:11].apply(
+        lambda x: all_tracts.loc[all_tracts.FIPS.eq(x),['Tract','County','State']].values.tolist())
+    data_dictionary['tract']['ejscreen'][['Tract', 'County','State']] = [x[0] for x in tracts_states.tolist()]
+    env_tract = data_dictionary['tract']['ejscreen']
+    env_tract = env_tract[['FIPS', 'Tract', 'County', 'State', 'PM25', 'Lead Paint', "Diesel PM", 
+                          "Air Toxics Cancer", "Air Toxics Resp", "Traffic Proximity", "Water Discharge", 
+                          "Superfund Proximity", "RMP Proximity", "Hazardous Waste Proximity", "Ozone", 
+                          "Underground Storage Tanks"]].reset_index(drop = True)
+    
     env_county = organize_table_county(env_topic)
-#     env_tract = organize_table(env_topic, 'tract')
     env_county_l = pd.melt(env_county, id_vars = ['FIPS', 'County', 'State'], 
+                            var_name = 'measure', value_name = 'value')
+    fd_tract_l = pd.melt(fd_tract, id_vars = ['FIPS','Tract','County','State'], 
                             var_name = 'measure', value_name = 'value')
     env_tract_l = pd.melt(env_tract, id_vars = ['FIPS','Tract','County','State'], 
                             var_name = 'measure', value_name = 'value')
@@ -534,6 +578,7 @@ if __name__ == '__main__':
                 'sociodemographics_tract': sociodemo_tract, 'sd_tract_long': sd_tract_l,
                 'environment_county': env_county, 'environment_county_long': env_county_l,
                 'environment_tract': env_tract, 'environment_tract_long': env_tract_l,
+                'food_desert_tract': fd_tract, 'food_desert_tract_long': fd_tract_l,
                  'facilities_and_providers': point_df, 'shapes':shapes}
     
     #### PUMA

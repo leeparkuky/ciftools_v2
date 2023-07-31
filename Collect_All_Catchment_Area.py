@@ -51,11 +51,6 @@ def gen_spatial_zip_file(cancer_center_name_abb, catchment_area_df, data_diction
     shutil.rmtree(directory_path)
     return 1
 
-
-
-
-
-
 def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
     # make sure you have a folder "data" before calling this function
     directory_path = os.path.join(os.getcwd(), cancer_center_name_abb) # folder that will contain csv files
@@ -70,6 +65,8 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
             cdata[table_name] = df.loc[df.State.isin(cancer_center_state),:]
         elif 'tract' in table_name:
             cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
+        elif 'puma' in table_name: 
+            cdata[table_name] = df
         elif 'shape' in table_name: # shape tables
             county_shape = df['county_shape']; tract_shape = df['tract_shape']
             county_shape = county_shape.loc[county_shape.FIPS.isin(cancer_center_fips),:].sort_values('FIPS').reset_index(drop = True)
@@ -80,8 +77,8 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
             cdata['tract_shape'] = tract_shape
         else:
             cdata[table_name] = df.loc[df.FIPS.str[:5].isin(cancer_center_fips),:]
-    cdata['county_shape'].to_file(ca_name + '_county_shape')
-    cdata['tract_shape'].to_file(ca_name + '_tract_shape')
+    # cdata['county_shape'].to_file(ca_name + '_county_shape')
+    # cdata['tract_shape'].to_file(ca_name + '_tract_shape')
     cdata['cancer_incidence'].to_csv(ca_name + '_cancer_incidence_county_' + today + '.csv', encoding='utf-8', index=False)
     cdata['cancer_mortality'].to_csv(ca_name + '_cancer_mortality_county_' + today + '.csv', encoding='utf-8', index=False)
     cdata['cancer_incidence_long'].to_csv(ca_name + '_cancer_incidence_county_long_' + today + '.csv', encoding='utf-8', index=False)
@@ -94,6 +91,8 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
     cdata['environment_county_long'].to_csv(ca_name + '_environment_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['environment_tract'].to_csv(ca_name + '_environment_tract_' + today + '.csv', encoding='utf-8', index=False)
     cdata['environment_tract_long'].to_csv(ca_name + '_environment_tract_long_' + today + '.csv', encoding='utf-8', index=False)
+    cdata['food_desert_tract'].to_csv(ca_name + '_food_desert_tract_' + today + '.csv', encoding='utf-8', index=False)
+    cdata['food_desert_tract_long'].to_csv(ca_name + '_food_desert_tract_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['ht_county'].to_csv(ca_name + '_housing_trans_county_' + today + '.csv', encoding='utf-8', index=False)
     cdata['ht_county_long'].to_csv(ca_name + '_housing_trans_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['ht_tract'].to_csv(ca_name + '_housing_trans_tract_' + today + '.csv', encoding='utf-8', index=False)
@@ -106,8 +105,15 @@ def gen_zip_file(cancer_center_name_abb, catchment_area_df, data_dictionary):
     cdata['sd_county_long'].to_csv(ca_name + '_sociodemographics_county_long_' + today + '.csv', encoding='utf-8', index=False)
     cdata['sociodemographics_tract'].to_csv(ca_name + '_sociodemographics_tract_' + today + '.csv', encoding='utf-8', index=False)
     cdata['sd_tract_long'].to_csv(ca_name + '_sociodemographics_tract_long_' + today + '.csv', encoding='utf-8', index=False)
-#     cdata['broadband_speeds'].to_csv(ca_name + '_broadband_speeds_' + today + '.csv', encoding='utf-8', index=False)
+    # cdata['broadband_speeds'].to_csv(ca_name + '_broadband_speeds_' + today + '.csv', encoding='utf-8', index=False)
     cdata['facilities_and_providers'].to_csv(ca_name + '_facilities_and_providers_' + today + '.csv', encoding='utf-8', index=False)
+    
+    # cdata['economy_puma'].to_csv(ca_name + '_economy_puma_' + today + '.csv', encoding='utf-8', index=False)
+    # cdata['economy_puma_long'].to_csv(ca_name + '_economy_puma_long_' + today + '.csv', encoding='utf-8', index=False)
+    # cdata['ht_puma'].to_csv(ca_name + '_housing_trans_puma_' + today + '.csv', encoding='utf-8', index=False)
+    # cdata['ht_puma_long'].to_csv(ca_name + '_housing_trans_puma_long_' + today + '.csv', encoding='utf-8', index=False)
+    # cdata['sociodemographics_puma'].to_csv(ca_name + '_sociodemographics_puma_' + today + '.csv', encoding='utf-8', index=False)
+    # cdata['sd_puma_long'].to_csv(ca_name + '_sociodemographics_puma_long_' + today + '.csv', encoding='utf-8', index=False)
     
     shutil.make_archive(os.path.join(os.getcwd(), 'data', cancer_center_name_abb), 'zip', directory_path)
     shutil.rmtree(directory_path)
@@ -132,8 +138,9 @@ if __name__ == '__main__':
     bash_script_kwargs = {
     "bash_file_name" : 'all_catchment_areas.sh', #the name of a bash file to run
     "catchment_area_name": "all", # the name of the catchment area name
-    "ca_file_path": "all_catchment_areas.csv",
+    "ca_file_path": "all_catchment_areas2.csv",
     "query_level" : ['county','tract'],
+    "add_puma_level": True,
     "acs_year"    : 2021,
     "download_file_type": ['pickle'],
     "census_api_key": 'f1a4c4de1f35fe90fc1ceb60fd97b39c9a96e436',
@@ -147,9 +154,9 @@ if __name__ == '__main__':
     
     
     
-    subprocess.run(["bash", "all_catchment_areas.sh"])
+    subprocess.run(["bash", "all_catchment_areas.sh"], shell=True)
 
-    ca_path = glob('*/all_catchment_areas.csv')[0]
+    ca_path = glob('*/all_catchment_areas2.csv')[0]
     ca = pd.read_csv(ca_path, dtype = {"FIPS":str})
     ca['FIPS'] = ca.FIPS.str.zfill(5)
     pickle_path = [x for x in glob('*/all_catchment_data*.pickle') if 'spatial' not in x][0]

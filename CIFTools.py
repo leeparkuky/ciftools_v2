@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Union, List
 import requests
 import urllib
+import certifi
 import asyncio
 import re
 import functools
@@ -201,7 +202,7 @@ class acs_sdoh:
     def cleanup_geo_col(df, level):
         if level in ['county subdivision','tract','block', 'county']:
             name_series = df.NAME.str.split(', ')
-            county_name = [x[-2] for x in name_series]
+            county_name = [x[-2].title().replace("'S", "'s") for x in name_series]
             state_name  = [x[-1] for x in name_series]
             FIPS        = df[df.columns[df.columns.isin(
                 ['county subdivision','tract','block', 'county', 'state'])]].apply(lambda x: ''.join(x), axis = 1)
@@ -287,6 +288,19 @@ class acs_sdoh:
         self.add_function(transform_df, 'insurance')
         if return_table:
             return transform_df()
+    
+    def gen_eng_prof_table(self, return_table = False):
+        config = self.gen_acs_config(**{'acs_group': 'B16005', 'acs_type': ''})
+        @custom_acs_data(self.key, config)
+        def transform_df(df):
+            notwell_col = [config.variables[config.labels.index(x)] for x in config.labels if re.match('.+not well', x)]
+            none_col  = [config.variables[config.labels.index(x)] for x in config.labels if re.match('.+not at all', x)] + notwell_col
+            df['Lack_English_Prof'] = df.loc[:, none_col].astype(int).sum(axis = 1)/df.B16005_001E.astype(int)
+            df.drop(config.variables, axis = 1, inplace = True)
+            return df
+        self.add_function(transform_df, 'eng_prof')
+        if return_table:
+            return transform_df()
         
 
     def gen_vacancy_table(self, return_table = False):
@@ -299,8 +313,6 @@ class acs_sdoh:
         self.add_function(transform_df, 'vacancy')
         if return_table:
             return transform_df()
-
-    
 
     def gen_poverty_table(self, return_table = False):
         config = self.gen_acs_config(**{'acs_group': 'B17026', 'acs_type': ''})
@@ -366,6 +378,48 @@ class acs_sdoh:
         if return_table:
             return transform_df()
         
+    def gen_single_parent_table(self, return_table = False):
+        config = self.gen_acs_config(**{'acs_group': 'B11012', 'acs_type': ''})
+        @custom_acs_data(self.key, config)
+        def transform_df(df):
+            df['single_parent_house'] = (df.B11012_010E.astype(int) + df.B11012_015E.astype(int))/df.B11012_001E.astype(int)
+            df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
+            return df
+        self.add_function(transform_df, 'single_parent')
+        if return_table:
+            return transform_df()
+        
+    def gen_housing_table(self, return_table = False):
+        config = self.gen_acs_config(**{'acs_group': 'DP04', 'acs_type': 'profile'})
+        @custom_acs_data(self.key, config)
+        def transform_df(df):
+            df['multi_unit_house'] = (df.DP04_0012E.astype(int) + df.DP04_0013E.astype(int))/df.DP04_0001E.astype(int)
+            df['mobile_home'] = df.DP04_0014E.astype(int)/df.DP04_0001E.astype(int)
+            df['owner_occupied'] = df.DP04_0046E.astype(int)/df.DP04_0045E.astype(int)
+            df['crowding'] = (df.DP04_0078E.astype(int) + df.DP04_0079E.astype(int))/df.DP04_0076E.astype(int)
+            df['lack_plumbing'] = df.DP04_0073E.astype(int)/df.DP04_0072E.astype(int)
+            df['median_value'] = df.DP04_0089E.astype(float)
+            df.loc[df['median_value'].le(0), 'median_value'] = 0
+            df['median_mortgage'] = df.DP04_0101E.astype(float)
+            df.loc[df['median_mortgage'].le(0), 'median_mortgage'] = 0
+            df['median_rent'] = df.DP04_0134E.astype(float)
+            df.loc[df['median_rent'].le(0), 'median_rent'] = 0
+            df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
+            return df
+        self.add_function(transform_df, 'housing')
+        if return_table:
+            return transform_df()
+        
+    def gen_computer_table(self, return_table = False):
+        config = self.gen_acs_config(**{'acs_group': 'DP02', 'acs_type': 'profile'})
+        @custom_acs_data(self.key, config)
+        def transform_df(df):
+            df['no_broadband'] = 1 - df.DP02_0154E.astype(int)/df.DP02_0152E.astype(int)
+            df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
+            return df
+        self.add_function(transform_df, 'internet')
+        if return_table:
+            return transform_df()
         
     def gen_old_house_table(self, return_table = False):
         config = self.gen_acs_config(**{'acs_group': 'B25034', 'acs_type': ''})
@@ -383,7 +437,7 @@ class acs_sdoh:
         config = self.gen_acs_config(**{'acs_group': 'B19058', 'acs_type': ''})
         @custom_acs_data(self.key, config)
         def transform_df(df):
-            df['public_assistance_recieved'] = df.B19058_002E.astype(int)/df.B19058_001E.astype(int)
+            df['public_assistance_received'] = df.B19058_002E.astype(int)/df.B19058_001E.astype(int)
             df.drop(df.columns[df.columns.str.contains(config.acs_group)], axis = 1, inplace = True)
             return df
         self.add_function(transform_df, 'public_assistance')
@@ -407,7 +461,7 @@ class acs_sdoh:
             col3_label = ["Bachelor's degree", "Associate's degree", "Some college, 1 or more years, no degree",'Some college, less than 1 year'] + col4_label
             col3       = [config.variables[config.labels.index(x)] for x in col3_label]
             # col2 is high school and above
-            col2_label = ['Regular high school diploma'] + col3_label + col4_label
+            col2_label = ['Regular high school diploma'] + col3_label 
             col2       = [config.variables[config.labels.index(x)] for x in col2_label]
             # col5 is for completed college
             col5_label = ["Bachelor's degree"] + col4_label
@@ -600,7 +654,8 @@ def toxRel_data(location:Union[str, List[str]]):
     today = datetime.date.today(); year = today.year
     flag = True
     while flag: # this while statement will look for the most recent tri data
-        resp = requests.get(f'https://data.epa.gov/efservice/downloads/tri/mv_tri_basic_download/{year}_US/csv', stream=True)
+        # resp = requests.get(f'https://data.epa.gov/efservice/downloads/tri/mv_tri_basic_download/{year}_US/csv', stream=True)
+        resp = requests.get(f'https://data.epa.gov/efservice/downloads/tri/mv_tri_basic_download/2021_US/csv', stream=True)
         try:
             resp.raise_for_status()
             flag = False
@@ -970,6 +1025,7 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
                     datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
             elif count == 1:
                 if result_count:
+                    df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
                     return df[['Type','Name','Address','State', 'Phone_number', 'Notes']]
                 else:
                     df = pd.DataFrame(columns = ['Type','Name','Address','State', 'Phone_number', 'Notes'])
@@ -977,6 +1033,8 @@ def gen_nppes_by_taxonomy(taxonomy: str, location: str):
             else:
                 if result_count:
                     datasets.append(df[['Type','Name','Address','State', 'Phone_number', 'Notes']])
+                    result = pd.concat(datasets, axis = 0).reset_index(drop = True)
+                    return result
                 else:
                     result = pd.concat(datasets, axis = 0).reset_index(drop = True)
                     return result
@@ -1306,6 +1364,7 @@ class water_violation:
         self.testing = df
         df['County'] = df.COUNTY_SERVED.astype(str) + ' County'
         df['County']= df.County.str.replace('Parish County','Parish')
+        df['County']= df.County.str.replace('City County','City')
         df.drop(['COUNTY_SERVED', 'PRIMACY_AGENCY_CODE'], axis = 1, inplace  = True)
         df.loc[df.counts.isnull(),'counts'] = 0
         df['State'] = stateDf.loc[stateDf.StateAbbrev.eq(state), "State"].values[0]
@@ -1324,7 +1383,7 @@ class water_violation:
         
     @staticmethod
     def gen_violation(state:str, start_year: int, end_year:int = None):
-        url_violation = f'https://data.epa.gov/efservice/VIOLATION/IS_HEALTH_BASED_IND/Y/PRIMACY_AGENCY_CODE/{state}/CSV'
+        url_violation = f'https://data.epa.gov/efservice-v1/VIOLATION/IS_HEALTH_BASED_IND/Y/PRIMACY_AGENCY_CODE/{state}/COMPL_PER_BEGIN_DATE/%3E=/01-JAN-16/SEVERITY_IND_CNT/%3E=/1/CSV'
         violation = pd.read_csv(url_violation)
         violation.columns = violation.columns.str.replace(re.compile('.*\.'),"", regex = True)
         violation = violation.loc[violation.COMPL_PER_BEGIN_DATE.notnull() ,:]
@@ -1364,8 +1423,7 @@ class water_violation:
                 self.profile[loc] = gen_profile(loc)
                 self.violation[loc] = gen_violation(loc)
 
-                
-                
+               
 ############################################################################
 ## Food Desert      ########################################################
 ############################################################################
@@ -1437,7 +1495,59 @@ class food_desert:
         
         return data_dictionary
     
+                   
+############################################################################
+## EJScreen         ########################################################
+############################################################################
+
+class ejscreen:  
+    def __init__(self, state_fips: Union[ str,  List[str]]):
+        self.name = 'https://gaftp.epa.gov/EJScreen/2022/EJSCREEN_2022_Full_with_AS_CNMI_GU_VI_Tracts.csv'
+        self.path = self.name + '.zip'
+        self.state_fips = state_fips
+        
+    @property
+    def ejscreen_data(self):
+        if hasattr(self, '_ejscreen_data'):
+            pass
+        else:
+            self._ejscreen_data = self.download_data(self.state_fips)
+        return self._ejscreen_data
     
+    def download_data(self, state):
+        import ssl
+        ssl._create_default_https_context = ssl._create_unverified_context
+        url = urllib.request.urlopen(self.path)
+        
+        with ZipFile(BytesIO(url.read()), 'r') as zip:
+            df = pd.read_csv(zip.open(zip.namelist()[0]), dtype={'ID':str})
+        
+        df = df[['ID', 'PM25', 'OZONE', 'DSLPM', 'CANCER',
+                 'RESP', 'PTRAF', 'PRE1960PCT', 'PNPL', 'PRMP', 'PTSDF', 'UST', 'PWDIS']]
+        
+        df.rename(columns = {"ID" : "CensusTract", "PRE1960PCT" : 'Lead Paint', "DSLPM" : "Diesel PM", 
+                              "CANCER" : "Air Toxics Cancer", "RESP" : "Air Toxics Resp", 
+                              "PTRAF" : "Traffic Proximity", "PWDIS" : "Water Discharge", 
+                              "PNPL" : "Superfund Proximity", "PRMP" : "RMP Proximity",
+                              "PTSDF" : "Hazardous Waste Proximity", "OZONE" : "Ozone", 
+                              "UST" : "Underground Storage Tanks"}, inplace=True)
+        
+        df['CensusTract'] = df.CensusTract.str.zfill(11) # census tract fips is 11 digits code
+        df['State'] = df.CensusTract.apply(lambda x: str(x)[:2])
+        if isinstance(state, str):
+            assert len(state) == 2
+            df = df.loc[df.State.eq(state)].reset_index(drop = True)
+        else:
+            for s in state:
+                assert len(s) == 2
+            df = df.loc[df.State.isin(state),:].reset_index(drop = True)
+        data_dictionary = {}
+        # Tract
+        df.rename(columns = {'CensusTract':'FIPS'}, inplace = True)
+        df['FIPS'] = df.FIPS.astype(str)
+        data_dictionary['Tract'] = df
+        
+        return data_dictionary 
     
 ############################################################################
 ## scp_cancer_data      ####################################################   -> multiprocessing
@@ -1539,9 +1649,9 @@ class scp_cancer_data:
                                                              # file name will be unique for each query
         with open(fname, 'w') as f:
             for row in resp.iter_lines(decode_unicode = True): # go through response
-                if row[:6] == 'County':
+                if row[:6] in ['County', 'Area, ', 'Parish']:
                     flag = True
-                    row = row.replace(', ',',').replace(' ,','').replace(' ','')
+                    row = row.replace('Area', 'County').replace('Parish', 'County').replace(', ',',').replace(' ,','').replace(' ','')
                 elif flag & (row== ''):
                     flag = False
                 if flag:
@@ -1664,9 +1774,9 @@ class scp_cancer_data:
                                                              # file name will be unique for each query
         with open(fname, 'w') as f:
             for row in resp.iter_lines(decode_unicode = True): # go through response
-                if row[:6] == 'County':
+                if row[:6] in ['County', 'Area, ', 'Parish']:
                     flag = True
-                    row = row.replace(', ',',').replace(' ,','').replace(' ','')
+                    row = row.replace('Area', 'County').replace('Parish', 'County').replace(', ',',').replace(' ,','').replace(' ','')
                 elif flag & (row== ''):
                     flag = False
                 if flag:
@@ -1723,7 +1833,7 @@ class scp_cancer_data:
 #         return df
 
 ##################################################################
-## CDC PlACES (county/tract level risk factors and screening data)
+## CDC PLACES (county/tract level risk factors and screening data)
 ##################################################################
 
 
@@ -1755,14 +1865,20 @@ class places_data:
         
     def places_county(self):
         if isinstance(self.state, str):
-            results = self.config.client.get("i46a-9kgh", where=f'stateabbr="{self.state}"',  limit = 100_000)
+            results = self.config.client.get("xyst-f73f", where=f'stateabbr="{self.state}"',  limit = 100_000)
         else:
             state = '("' + '","'.join(self.state) + '")'
-            results = self.config.client.get("i46a-9kgh", where=f'stateabbr in {state}',  limit = 100_000)
+            results = self.config.client.get("xyst-f73f", where=f'stateabbr in {state}',  limit = 100_000)
         results_df = pd.DataFrame.from_records(results)
         results_df2 = results_df.loc[:, results_df.columns.isin(['countyfips', 'countyname', 'stateabbr', 'cancer_crudeprev', 
-                                  'cervical_crudeprev', 'colon_screen_crudeprev',
-                                  'csmoking_crudeprev', 'mammouse_crudeprev', 'obesity_crudeprev'])]
+                                                                 'cervical_crudeprev', 'colon_screen_crudeprev', 'csmoking_crudeprev', 
+                                                                 'mammouse_crudeprev', 'obesity_crudeprev', 'binge_crudeprev', 
+                                                                 'bphigh_crudeprev', 'bpmed_crudeprev', 'casthma_crudeprev', 
+                                                                 'chd_crudeprev', 'checkup_crudeprev', 'copd_crudeprev', 
+                                                                 'dental_crudeprev', 'depression_crudeprev', 'diabetes_crudeprev', 
+                                                                 'ghlth_crudeprev', 'kidney_crudeprev', 'lpa_crudeprev', 
+                                                                 'mhlth_crudeprev', 'phlth_crudeprev', 'sleep_crudeprev', 
+                                                                 'stroke_crudeprev', 'teethlost_crudeprev'])]
         if isinstance(self.state, str):
             state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in [self.state]}
         else:
@@ -1774,32 +1890,77 @@ class places_data:
                                                   'colon_screen_crudeprev': 'Met_Colon_Screen', 
                                                   'mammouse_crudeprev': 'Met_Breast_Screen', 
                                                   'csmoking_crudeprev': 'Currently_Smoke',
-                                                  'obesity_crudeprev': 'BMI_Obese'})
+                                                  'obesity_crudeprev': 'BMI_Obese', 
+                                                  'binge_crudeprev' : 'Binge_Drinking',
+                                                  'bphigh_crudeprev' : 'High_BP',
+                                                  'bpmed_crudeprev' : 'BP_Medicine',
+                                                  'casthma_crudeprev' : 'Asthma',
+                                                  'chd_crudeprev' : 'CHD',
+                                                  'checkup_crudeprev' : 'Recent_Checkup',
+                                                  'copd_crudeprev' : 'COPD',
+                                                  'dental_crudeprev' : 'Recent_Dentist',
+                                                  'depression_crudeprev' : 'Depression',
+                                                  'diabetes_crudeprev' : 'Diabetes_DX',
+                                                  'ghlth_crudeprev' : 'Bad_Health',
+                                                  'kidney_crudeprev' : 'Kidney_Disease',
+                                                  'lpa_crudeprev' : 'Physically_Inactive',
+                                                  'mhlth_crudeprev' : 'Poor_Mental',
+                                                  'phlth_crudeprev' : 'Poor_Physical',
+                                                  'sleep_crudeprev' : 'Sleep_Debt',
+                                                  'stroke_crudeprev' : 'Had_Stroke',
+                                                  'teethlost_crudeprev' : 'No_Teeth'})
         results_df3['State'] = states_name
-        results_df3 = results_df3[['FIPS','County','State','Cancer_Prevalence', 
+        results_df3 = results_df3[['FIPS','County','State','Met_Breast_Screen',
                                   'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
-                                  'Met_Breast_Screen','BMI_Obese']]
-        results_df3[['Cancer_Prevalence', 
+                                  'BMI_Obese', 'Physically_Inactive', 
+                                  'Binge_Drinking', 'Sleep_Debt', 'Cancer_Prevalence',  
+                                  'Bad_Health', 'Poor_Physical', 
+                                  'Poor_Mental', 'Depression',
+                                  'Diabetes_DX', 'High_BP', 'BP_Medicine', 
+                                  'CHD', 'Had_Stroke', 'Kidney_Disease', 
+                                  'Asthma', 'COPD', 'No_Teeth', 
+                                  'Recent_Checkup', 'Recent_Dentist']]
+        results_df3[['Met_Breast_Screen',
                                   'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
-                                  'Met_Breast_Screen','BMI_Obese']] = results_df3[['Cancer_Prevalence', 
-                                  'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
-                                  'Met_Breast_Screen','BMI_Obese']].astype(float)
+                                  'BMI_Obese', 'Physically_Inactive', 
+                                  'Binge_Drinking', 'Sleep_Debt', 'Cancer_Prevalence',  
+                                  'Bad_Health', 'Poor_Physical', 
+                                  'Poor_Mental', 'Depression',
+                                  'Diabetes_DX', 'High_BP', 'BP_Medicine', 
+                                  'CHD', 'Had_Stroke', 'Kidney_Disease', 
+                                  'Asthma', 'COPD', 'No_Teeth', 
+                                  'Recent_Checkup', 'Recent_Dentist']] = results_df3[['Met_Breast_Screen',
+                                                            'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                                            'BMI_Obese', 'Physically_Inactive', 
+                                                            'Binge_Drinking', 'Sleep_Debt', 'Cancer_Prevalence',  
+                                                            'Bad_Health', 'Poor_Physical', 
+                                                            'Poor_Mental', 'Depression',
+                                                            'Diabetes_DX', 'High_BP', 'BP_Medicine', 
+                                                            'CHD', 'Had_Stroke', 'Kidney_Disease', 
+                                                            'Asthma', 'COPD', 'No_Teeth', 
+                                                            'Recent_Checkup', 'Recent_Dentist']].astype(float)
         del results_df, results_df2
         return results_df3
         
     def places_tract(self):
         if isinstance(self.state, str):
-            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr="{self.state}"', limit = 100_000)
+            results = self.config.client.get("shc3-fzig", where=f'stateabbr="{self.state}"', limit = 100_000)
         else:
             state = '("' + '","'.join(self.state) + '")'
 #             while 
-            results = self.config.client.get("yjkw-uj5s", where=f'stateabbr in {state}', offset = 0, limit = 100_000)
+            results = self.config.client.get("shc3-fzig", where=f'stateabbr in {state}', offset = 0, limit = 100_000)
 
         results_df = pd.DataFrame.from_records(results)
         results_df2 = results_df.loc[:, results_df.columns.isin(['tractfips', 'countyfips', 'countyname', 
-                                                                 'stateabbr', 'cancer_crudeprev', 
-                                                                 'colon_screen_crudeprev', 'csmoking_crudeprev', 
-                                                                 'mammouse_crudeprev', 'obesity_crudeprev'])]
+                                                                 'stateabbr', 'cancer_crudeprev', 'mammouse_crudeprev', 
+                                                                 'cervical_crudeprev', 'colon_screen_crudeprev', 'csmoking_crudeprev',
+                                                                 'obesity_crudeprev', 'binge_crudeprev', 'bphigh_crudeprev', 
+                                                                 'bpmed_crudeprev', 'casthma_crudeprev', 'chd_crudeprev', 
+                                                                 'checkup_crudeprev', 'copd_crudeprev', 'dental_crudeprev', 
+                                                                 'depression_crudeprev', 'diabetes_crudeprev', 'ghlth_crudeprev', 
+                                                                 'kidney_crudeprev', 'lpa_crudeprev', 'mhlth_crudeprev', 
+                                                                 'phlth_crudeprev', 'sleep_crudeprev', 'stroke_crudeprev', 
+                                                                 'teethlost_crudeprev'])]
         
         if isinstance(self.state, str):
             state_abbr_to_name = {x: stateDf.loc[stateDf.StateAbbrev.eq(x), 'State'].values[0] for x in [self.state]} #inefficient...
@@ -1810,17 +1971,60 @@ class places_data:
         results_df3 = results_df2.rename(columns={'tractfips': 'FIPS', 'countyfips': 'FIPS5', 
                                                   'countyname': 'County',   
                                                   'cancer_crudeprev': 'Cancer_Prevalence',
+                                                  'cervical_crudeprev': 'Met_Cervical_Screen',
                                                   'colon_screen_crudeprev': 'Met_Colon_Screen', 
                                                   'mammouse_crudeprev': 'Met_Breast_Screen', 
                                                   'csmoking_crudeprev': 'Currently_Smoke',
-                                                  'obesity_crudeprev': 'BMI_Obese'})
+                                                  'obesity_crudeprev': 'BMI_Obese', 
+                                                  'binge_crudeprev' : 'Binge_Drinking',
+                                                  'bphigh_crudeprev' : 'High_BP',
+                                                  'bpmed_crudeprev' : 'BP_Medicine',
+                                                  'casthma_crudeprev' : 'Asthma',
+                                                  'chd_crudeprev' : 'CHD',
+                                                  'checkup_crudeprev' : 'Recent_Checkup',
+                                                  'copd_crudeprev' : 'COPD',
+                                                  'dental_crudeprev' : 'Recent_Dentist',
+                                                  'depression_crudeprev' : 'Depression',
+                                                  'diabetes_crudeprev' : 'Diabetes_DX',
+                                                  'ghlth_crudeprev' : 'Bad_Health',
+                                                  'kidney_crudeprev' : 'Kidney_Disease',
+                                                  'lpa_crudeprev' : 'Physically_Inactive',
+                                                  'mhlth_crudeprev' : 'Poor_Mental',
+                                                  'phlth_crudeprev' : 'Poor_Physical',
+                                                  'sleep_crudeprev' : 'Sleep_Debt',
+                                                  'stroke_crudeprev' : 'Had_Stroke',
+                                                  'teethlost_crudeprev' : 'No_Teeth'})
         results_df3['State'] = states_name
 
-        results_df3 = results_df3[['FIPS','FIPS5','County','State','Cancer_Prevalence', 
-                                  'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']]
-        results_df3[['Cancer_Prevalence', 
-                                  'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']] = results_df3[['Cancer_Prevalence', 
-                                  'Met_Colon_Screen', 'Currently_Smoke','Met_Breast_Screen','BMI_Obese']].astype(float)
+        results_df3 = results_df3[['FIPS','FIPS5','County','State', 'Met_Breast_Screen',
+                                  'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                  'BMI_Obese', 'Physically_Inactive', 
+                                  'Binge_Drinking', 'Sleep_Debt', 'Cancer_Prevalence',  
+                                  'Bad_Health', 'Poor_Physical', 
+                                  'Poor_Mental', 'Depression',
+                                  'Diabetes_DX', 'High_BP', 'BP_Medicine', 
+                                  'CHD', 'Had_Stroke', 'Kidney_Disease', 
+                                  'Asthma', 'COPD', 'No_Teeth', 
+                                  'Recent_Checkup', 'Recent_Dentist']]
+        results_df3[['Met_Breast_Screen',
+                                  'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                  'BMI_Obese', 'Physically_Inactive', 
+                                  'Binge_Drinking', 'Sleep_Debt', 'Cancer_Prevalence',  
+                                  'Bad_Health', 'Poor_Physical', 
+                                  'Poor_Mental', 'Depression',
+                                  'Diabetes_DX', 'High_BP', 'BP_Medicine', 
+                                  'CHD', 'Had_Stroke', 'Kidney_Disease', 
+                                  'Asthma', 'COPD', 'No_Teeth', 
+                                  'Recent_Checkup', 'Recent_Dentist']] = results_df3[['Met_Breast_Screen',
+                                                            'Met_Cervical_Screen','Met_Colon_Screen', 'Currently_Smoke', 
+                                                            'BMI_Obese', 'Physically_Inactive', 
+                                                            'Binge_Drinking', 'Sleep_Debt', 'Cancer_Prevalence',  
+                                                            'Bad_Health', 'Poor_Physical', 
+                                                            'Poor_Mental', 'Depression',
+                                                            'Diabetes_DX', 'High_BP', 'BP_Medicine', 
+                                                            'CHD', 'Had_Stroke', 'Kidney_Disease', 
+                                                            'Asthma', 'COPD', 'No_Teeth', 
+                                                            'Recent_Checkup', 'Recent_Dentist']].astype(float)
         del results_df, results_df2
         return results_df3
 
@@ -1980,6 +2184,11 @@ if __name__ == '__main__':
         fd = food_desert(state_fips)
         return fd.food_desert_data
     
+    # Food Desert
+    def ejscreen_func(state_fips = state_fips):
+        ej = ejscreen(state_fips)
+        return ej.ejscreen_data
+    
     # Water Violation (multiprocessing if state_fips is a list)
     def water_violation_func(state_fips = state_fips):
         wv = water_violation(state_fips)
@@ -2001,15 +2210,15 @@ if __name__ == '__main__':
     pbar.set_description("collecting bls, food desert, water violation, urban-rural-counties, and risk-and-screening data")
 
     if isinstance(state_fips, str):
-        functions = [food_desert_func, cdc_risk_and_screening, bls_func, urban_rural_func, 
+        functions = [food_desert_func, ejscreen_func, cdc_risk_and_screening, bls_func, urban_rural_func, 
                      water_violation_func, superfund_func]
-        dataset_name = ['food_desert','cdc','bls','urban_rural','water_violation','superfund']
+        dataset_name = ['food_desert', 'ejscreen', 'cdc','bls','urban_rural','water_violation','superfund']
         res = Parallel(n_jobs = -1)(delayed(f)() for f in functions)
         other_data = {k: v for k,v in zip(dataset_name, res)}
     else:
-        functions = [food_desert_func, cdc_risk_and_screening, bls_func, 
+        functions = [food_desert_func, ejscreen_func, cdc_risk_and_screening, bls_func, 
                      urban_rural_func, superfund_func]
-        dataset_name = ['food_desert','cdc','bls', 'urban_rural', 'superfund']
+        dataset_name = ['food_desert', 'ejscreen', 'cdc','bls', 'urban_rural', 'superfund']
         res = Parallel(n_jobs = -1)(delayed(f)() for f in functions)
         other_data = {k: v for k,v in zip(dataset_name, res)}
         other_data['water_violation'] = water_violation_func()
@@ -2026,6 +2235,9 @@ if __name__ == '__main__':
     sdoh_by_query_level['county']['food_desert'] = other_data['food_desert']['County']
     sdoh_by_query_level['tract']['food_desert']  = other_data['food_desert']['Tract']
     
+    # appending food_desert
+    sdoh_by_query_level['tract']['ejscreen']  = other_data['ejscreen']['Tract']
+    
     # appending water violation
     sdoh_by_query_level['county']['water_violation'] = other_data['water_violation']
     pbar.update(1)
@@ -2035,7 +2247,7 @@ if __name__ == '__main__':
     
     # appending superfund
     sdoh_by_query_level['facility']['superfund'] = other_data['superfund']
-
+    
     pbar.update(1)
     pbar.set_description("data collection is complete")
 
