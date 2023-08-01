@@ -1401,9 +1401,11 @@ class water_violation:
     def gen_profile(state:str):
         url_systems = f'https://data.epa.gov/efservice/GEOGRAPHIC_AREA/PWSID/BEGINNING/{state}/CSV'
         profile = pd.read_csv(url_systems)
+        profile.columns = map(str.upper, profile.columns)
         if len(profile.index) == 10001:
             url_systems2 = f'https://data.epa.gov/efservice/GEOGRAPHIC_AREA/PWSID/BEGINNING/{state}/rows/10001:20000/CSV'
             profile2 = pd.read_csv(url_systems2)
+            profile2.columns = map(str.upper, profile2.columns)
             profile = pd.concat([profile,profile2]).reset_index(drop=True)
             del profile2
         profile.columns = profile.columns.str.replace(re.compile('.*\.'),"", regex = True)
