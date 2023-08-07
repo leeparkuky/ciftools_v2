@@ -547,7 +547,7 @@ if __name__ == '__main__':
     data_dictionary['tract']['ejscreen'][['Tract', 'County','State']] = [x[0] for x in tracts_states.tolist()]
     env_tract = data_dictionary['tract']['ejscreen']
     env_tract = env_tract[['FIPS', 'Tract', 'County', 'State', 'PM25', 'Lead Paint', "Diesel PM", 
-                          "Air Toxics Cancer", "Air Toxics Resp", "Traffic Proximity", "Water Discharge", 
+                          "Air Toxics Cancer", "Air Toxics Resp", "Toxics Release to Air", "Traffic Proximity", "Water Discharge", 
                           "Superfund Proximity", "RMP Proximity", "Hazardous Waste Proximity", "Ozone", 
                           "Underground Storage Tanks"]].reset_index(drop = True)
     

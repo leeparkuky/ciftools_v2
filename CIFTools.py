@@ -1504,7 +1504,7 @@ class food_desert:
 
 class ejscreen:  
     def __init__(self, state_fips: Union[ str,  List[str]]):
-        self.name = 'https://gaftp.epa.gov/EJScreen/2022/EJSCREEN_2022_Full_with_AS_CNMI_GU_VI_Tracts.csv'
+        self.name = 'https://gaftp.epa.gov/EJScreen/2023/EJSCREEN_2023_Tracts_with_AS_CNMI_GU_VI.csv'
         self.path = self.name + '.zip'
         self.state_fips = state_fips
         
@@ -1525,14 +1525,14 @@ class ejscreen:
             df = pd.read_csv(zip.open(zip.namelist()[0]), dtype={'ID':str})
         
         df = df[['ID', 'PM25', 'OZONE', 'DSLPM', 'CANCER',
-                 'RESP', 'PTRAF', 'PRE1960PCT', 'PNPL', 'PRMP', 'PTSDF', 'UST', 'PWDIS']]
+                 'RESP', 'RSEI_AIR', 'PTRAF', 'PRE1960PCT', 'PNPL', 'PRMP', 'PTSDF', 'UST', 'PWDIS']]
         
         df.rename(columns = {"ID" : "CensusTract", "PRE1960PCT" : 'Lead Paint', "DSLPM" : "Diesel PM", 
                               "CANCER" : "Air Toxics Cancer", "RESP" : "Air Toxics Resp", 
                               "PTRAF" : "Traffic Proximity", "PWDIS" : "Water Discharge", 
                               "PNPL" : "Superfund Proximity", "PRMP" : "RMP Proximity",
                               "PTSDF" : "Hazardous Waste Proximity", "OZONE" : "Ozone", 
-                              "UST" : "Underground Storage Tanks"}, inplace=True)
+                              "UST" : "Underground Storage Tanks", "RSEI_AIR": "Toxics Release to Air"}, inplace=True)
         
         df['CensusTract'] = df.CensusTract.str.zfill(11) # census tract fips is 11 digits code
         df['State'] = df.CensusTract.apply(lambda x: str(x)[:2])
